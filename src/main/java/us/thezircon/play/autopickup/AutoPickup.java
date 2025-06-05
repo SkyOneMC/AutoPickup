@@ -40,7 +40,7 @@ public final class AutoPickup extends JavaPlugin {
     public static boolean usingEpicFurnaces = false; //EpicFurnaces - Songoda
     public static boolean usingWildChests = false; // WildChests - BG Development
     public static boolean usingMythicMobs = false; // MythicMobs
-    public static boolean usingSSB2 = true; //SuperiorSkynlock2
+    public static boolean usingSSB2 = false; //SuperiorSkynlock2
 
 
     //public static boolean usingPFHoppers = false; // Play.PeacefulFarms.Net
@@ -114,6 +114,11 @@ public final class AutoPickup extends JavaPlugin {
         // MythicMobs
         if ((getServer().getPluginManager().getPlugin("MythicMobs") != null)) {
             usingMythicMobs = true;
+        }
+
+        // SuperiorSkyblock2
+        if ((getServer().getPluginManager().getPlugin("SuperiorSkyblock2") != null)) {
+            usingSSB2 = true;
         }
 
         // Peaceful Farms - Hoppers Patch
