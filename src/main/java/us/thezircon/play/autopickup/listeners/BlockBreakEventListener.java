@@ -144,7 +144,61 @@ public class BlockBreakEventListener implements Listener {
                 }
             }
         }.runTaskLater(PLUGIN, 1);
+        
+    new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (AutoPickup.usingSSB2) {
 
+                     {
+                        if (!SuperiorSkyblockAPI.getIslandAt(loc).isCurrentlyActive()) { return; }
+
+                        com.bgsoftware.superiorskyblock.api.island.Island island = SuperiorSkyblockAPI.getIslandAt(loc);
+                        Location loc = island.getCenter(player.getWorld().getEnvironment());
+                        if(!loc.getWorld().equals(block.getWorld())) return;
+
+                         if (isSimilar((int)loc.getX(),block.getX(),(int)loc.getY(),block.getY(),(int)loc.getZ(), block.getZ())) {
+                            for (Entity ent : loc.getWorld().getNearbyEntities(block.getLocation().add(0, 1, 0), 1, 1, 1)) {
+                                if (ent instanceof Item) {
+                                    HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(((Item) ent).getItemStack());
+                                    ent.remove();
+                                    if (leftOver.keySet().size()>0) {
+                                        for (ItemStack item : leftOver.values()) {
+                                            player.getWorld().dropItemNaturally(loc, item);
+
+                                        }
+                                        if (doFullInvMSG) {
+                                            long secondsLeft;
+                                            long cooldown = 15000; // 15 sec
+                                            if (AutoPickup.lastInvFullNotification.containsKey(player.getUniqueId())) {
+                                                secondsLeft = (AutoPickup.lastInvFullNotification.get(player.getUniqueId())/1000)+ cooldown/1000 - (System.currentTimeMillis()/1000);
+                                            } else {
+                                                secondsLeft = 0;
+                                            }
+                                            if (secondsLeft<=0) {
+                                                player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getFullInventory());
+                                                AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
+                                            }
+                                        }
+                                    }
+
+//                                    if (player.getInventory().firstEmpty() == -1) { // Checks for inventory space
+//                                        //Player has no space
+//                                        if (doFullInvMSG) {
+//                                            player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getFullInventory());
+//                                        }
+//                                        return;
+//                                    } else {
+//                                        player.getInventory().addItem(((Item) ent).getItemStack());
+//                                        ent.remove();
+//                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }.runTaskLater(PLUGIN, 1);
         // Mend Items & Give Player XP
         boolean usingSilkSpawner = PLUGIN.getConfig().getBoolean("usingSilkSpawnerPlugin");
         if (!usingSilkSpawner || !(block.getType()==Material.SPAWNER)) {
@@ -548,7 +602,12 @@ public class BlockBreakEventListener implements Listener {
         }
 
     }
-
+    
+    private static boolean isSimilar(int x1,int x2, int y1, int y2, int z1, int z2)
+    {
+      return  Math.abs(x1-x2)<=5 && Math.abs(y1-y2)<=5 && Math.abs(z1-z2)<=5;
+    }
+    
     private void addLocation(Location loc, Player player) {
         String key = loc.getBlockX()+";"+loc.getBlockY()+";"+loc.getBlockZ()+";"+loc.getWorld();
         AutoPickup.customItemPatch.put(key, new PickupObjective(loc, player, Instant.now()));
