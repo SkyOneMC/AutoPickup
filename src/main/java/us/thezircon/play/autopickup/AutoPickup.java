@@ -40,6 +40,8 @@ public final class AutoPickup extends JavaPlugin {
     public static boolean usingEpicFurnaces = false; //EpicFurnaces - Songoda
     public static boolean usingWildChests = false; // WildChests - BG Development
     public static boolean usingMythicMobs = false; // MythicMobs
+    public static boolean usingSSB2 = true; //SuperiorSkynlock2
+
 
     //public static boolean usingPFHoppers = false; // Play.PeacefulFarms.Net
     //public static boolean usingPFMoreHoppers = false; // Patch for PF
