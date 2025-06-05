@@ -6,6 +6,7 @@ authors: [BUTTERFIELD8]
 description: Automatically pickup broken blocks.
 website: https://discord.gg/ncHH4FP
 api-version: 1.13
+loadbefore: [SuperiorSkyblock2]
 softdepend: [BentoBox, LockettePro, UpgradeableHoppers, PlaceholderAPI, Jobs, MythicMobs]
 commands:
   autopickup:
