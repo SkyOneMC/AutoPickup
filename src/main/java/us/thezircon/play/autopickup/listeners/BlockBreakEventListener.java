@@ -1,6 +1,5 @@
 package us.thezircon.play.autopickup.listeners;
 
-//import me.crafter.mc.lockettepro.LocketteProAPI;
 
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
 import org.bukkit.*;
@@ -117,15 +116,23 @@ public class BlockBreakEventListener implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (!AutoPickup.usingSSB2) return;
-                if (!SuperiorSkyblockAPI.getIslandAt(loc).isCurrentlyActive()) return;
 
-                Location oneBlockLocation = com.bgsoftware.ssboneblock.utils.WorldUtils.getOneBlock(SuperiorSkyblockAPI.getIslandAt(player.getLocation()));
+                if (!AutoPickup.usingSSB2OneBlock) return;
+
+                com.bgsoftware.superiorskyblock.api.island.Island island = SuperiorSkyblockAPI.getIslandAt(player.getLocation());
+
+
+                if(island == null) return;
+
+                Location oneBlockLocation = island.getCenter(SuperiorSkyblockAPI.getSettings().getWorlds().getDefaultWorldDimension()).subtract(0.5F,1.0F,0.5F);
+
                 if (!oneBlockLocation.equals(block.getLocation())) return;
 
                 oneBlockAutoPickup(loc, block, player, doFullInvMSG);
+
             }
         }.runTaskLater(PLUGIN, 1);
+
         // Mend Items & Give Player XP
         boolean usingSilkSpawner = PLUGIN.getConfig().getBoolean("usingSilkSpawnerPlugin");
         if (!usingSilkSpawner || !(block.getType() == Material.SPAWNER)) {
@@ -540,10 +547,6 @@ public class BlockBreakEventListener implements Listener {
             ///////////////////////////////////////////////////////////////////////////////////////
         }
 
-    }
-
-    private static boolean isSimilar(int x1, int x2, int y1, int y2, int z1, int z2) {
-        return Math.abs(x1 - x2) <= 5 && Math.abs(y1 - y2) <= 5 && Math.abs(z1 - z2) <= 5;
     }
 
     private void addLocation(Location loc, Player player) {
