@@ -55,3 +55,6 @@ hs_err_pid*
 .idea/
 AutoPickup - Recode.iml
 *.iml
+
+# For the SSBOneBlock module
+!libs/*.jar

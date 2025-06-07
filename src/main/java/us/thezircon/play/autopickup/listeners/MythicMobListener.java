@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.InventoryUtils;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -60,22 +61,7 @@ public class MythicMobListener implements Listener {
             HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drops);
             iter.remove();
             if (leftOver.keySet().size()>0) {
-                for (ItemStack item : leftOver.values()) {
-                    player.getWorld().dropItemNaturally(loc, item);
-                }
-                if (doFullInvMSG) {
-                    long secondsLeft;
-                    long cooldown = 15000; // 15 sec
-                    if (AutoPickup.lastInvFullNotification.containsKey(player.getUniqueId())) {
-                        secondsLeft = (AutoPickup.lastInvFullNotification.get(player.getUniqueId())/1000)+ cooldown/1000 - (System.currentTimeMillis()/1000);
-                    } else {
-                        secondsLeft = 0;
-                    }
-                    if (secondsLeft<=0) {
-                        player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getFullInventory());
-                        AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
-                    }
-                }
+                InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver, PLUGIN);
             }
         }
         e.getDrops().clear();
