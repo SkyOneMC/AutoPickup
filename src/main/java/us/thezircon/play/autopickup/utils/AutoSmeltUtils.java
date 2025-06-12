@@ -4,7 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.FurnaceRecipe;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
 import us.thezircon.play.autopickup.AutoPickup;
 
 import java.util.*;
@@ -15,38 +18,35 @@ public class AutoSmeltUtils {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    public boolean isAutoSmeltEnabled = false;
-    public static Material[] ignore = {Material.COAL_ORE, Material.REDSTONE_ORE, Material.DIAMOND_ORE, Material.EMERALD_ORE, Material.LAPIS_ORE, Material.NETHER_QUARTZ_ORE};
-    public static List<Material> ignoreMaterials = Collections.unmodifiableList(Arrays.asList(ignore));
-
-    public boolean isEnabled() {
-        return isAutoSmeltEnabled;
-    }
+    public static final List<Material> IGNORE_MATERIALS = List.of(Material.COAL_ORE, Material.REDSTONE_ORE, Material.DIAMOND_ORE, Material.EMERALD_ORE, Material.LAPIS_ORE, Material.NETHER_QUARTZ_ORE);
 
     public static void loadFurnaceRecipes(Map<Material, FurnaceRecipe> smeltRecipeCache) {
+        smeltRecipeCache.clear();
+
         Iterator<Recipe> iter = Bukkit.recipeIterator();
         while (iter.hasNext()) {
             Recipe recipe = iter.next();
-            if (recipe instanceof FurnaceRecipe) {
-                FurnaceRecipe furnaceRecipe = (FurnaceRecipe) recipe;
-                Material inputType = furnaceRecipe.getInput().getType();
-                // Only cache the first found recipe per material
-                smeltRecipeCache.putIfAbsent(inputType, furnaceRecipe);
+            if (recipe instanceof FurnaceRecipe furnaceRecipe) {
+                RecipeChoice inputChoice = furnaceRecipe.getInputChoice();
+
+                if (inputChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
+                    for (Material mat : materialChoice.getChoices()) {
+                        smeltRecipeCache.putIfAbsent(mat, furnaceRecipe);
+                    }
+                }
             }
         }
     }
 
-
     public static ItemStack smelt(ItemStack itemStack, Player player) {
         List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("AutoSmeltBlacklist");
 
-        if (ignoreMaterials.contains(itemStack.getType()) || blacklist.contains(itemStack.getType().toString())) {
-            return itemStack;
+        if (IGNORE_MATERIALS.contains(itemStack.getType()) || blacklist.contains(itemStack.getType().toString())) {
+            return itemStack.clone();
         }
 
-        // Special case: logs into charcoal
         if (Tag.LOGS_THAT_BURN.isTagged(itemStack.getType())) {
-            player.giveExp(0); // Adjust XP if needed
+            // No XP given for logs smelted into charcoal (can adjust if desired)
             return new ItemStack(Material.CHARCOAL, itemStack.getAmount());
         }
 
@@ -58,7 +58,7 @@ public class AutoSmeltUtils {
             return result;
         }
 
-        return itemStack;
+        return itemStack.clone();
     }
 
 }

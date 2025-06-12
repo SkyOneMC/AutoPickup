@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.commands.AutoDrops;
 import us.thezircon.play.autopickup.commands.CMDManager;
+import us.thezircon.play.autopickup.utils.Lang;
 
 import java.util.List;
 
@@ -36,8 +37,10 @@ public class drops extends CMDManager {
             if (player.hasPermission("autopickup.pickup.entities") || !requirePermsAUTO) {
                 AutoDrops.toggle(player);
             } else {
-                sender.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getNoPerms());
+                PLUGIN.getMsg().send(player, Lang.NO_PERMS);
             }
+        } else {
+            PLUGIN.getMsg().sendToConsole(PLUGIN.getMsg().getNoConsoleMessage());
         }
     }
 

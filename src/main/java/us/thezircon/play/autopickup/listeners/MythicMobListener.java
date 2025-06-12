@@ -2,8 +2,6 @@ package us.thezircon.play.autopickup.listeners;
 
 import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
 import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,50 +18,39 @@ public class MythicMobListener implements Listener {
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
     @EventHandler
-    public void onDeath(MythicMobDeathEvent e) {
-
-        if (e.getKiller()==null) {
-            return;
-        }
-
-        Player player;
-        if (e.getKiller() instanceof Player) {
-            player = (Player) e.getKiller();
-        } else {
-            return;
-        }
-
+    public void onDeath(MythicMobDeathEvent event) {
+        if (!(event.getKiller() instanceof Player player)) return;
         if (!PLUGIN.autopickup_list_mobs.contains(player)) return;
 
-        boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
+        Location location = player.getLocation();
+        if (isWorldBlacklisted(location)) return;
+        if (isMobBlacklisted(event)) return;
 
-        Location loc = e.getKiller().getLocation();
-        if (AutoPickup.worldsBlacklist!=null && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName())) {
-            return;
-        }
+        boolean showFullInvMsg = PLUGIN.getConfig().getBoolean("doFullInvMSG");
 
-        if (PLUGIN.getBlacklistConf().contains("BlacklistedEntities", true)) {
-            boolean doBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklistedEntities");
-            List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("BlacklistedEntities");
+        Iterator<ItemStack> iterator = event.getDrops().iterator();
+        while (iterator.hasNext()) {
+            ItemStack drop = iterator.next();
+            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
+            iterator.remove();
 
-            if (doBlacklist && blacklist.contains(e.getMobType().toString())) {
-                return;
+            if (!leftover.isEmpty()) {
+                InventoryUtils.handleItemOverflow(location, player, showFullInvMsg, leftover, PLUGIN);
             }
         }
-
-
-        // Drops
-        Iterator<ItemStack> iter = e.getDrops().iterator();
-        while (iter.hasNext()) {
-            ItemStack drops = iter.next();
-            HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drops);
-            iter.remove();
-            if (leftOver.keySet().size()>0) {
-                InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver, PLUGIN);
-            }
-        }
-        e.getDrops().clear();
-
     }
 
+    private boolean isWorldBlacklisted(Location location) {
+        List<String> blacklist = AutoPickup.worldsBlacklist;
+        return blacklist != null && blacklist.contains(location.getWorld().getName());
+    }
+
+    private boolean isMobBlacklisted(MythicMobDeathEvent event) {
+        if (!PLUGIN.getBlacklistConf().contains("BlacklistedEntities", true)) return false;
+
+        boolean doBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklistedEntities");
+        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("BlacklistedEntities");
+
+        return doBlacklist && blacklist.contains(event.getMobType().toString());
+    }
 }

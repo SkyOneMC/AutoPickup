@@ -14,36 +14,36 @@ ConfigVersion: 1.4
 #############################################################################################################
 
 #Message Prefix
-msgPrefix: "&8[&5Auto&d&oPickup&8]"
+msgPrefix: "<gray>[<gradient:#AA00FF:#FF55FF>Auto<italic>Pickup</italic></gradient><gray>]"
 
 #Toggle Message - /auto
-msgAutoPickupEnable: "&7You have&a enabled &7auto pickup."
-msgAutoPickupDisable: "&7You have&c disabled &7auto pickup."
+msgAutoPickupEnable: "<gray>You have <green>enabled <gray>auto pickup."
+msgAutoPickupDisable: "<gray>You have <red>disabled <gray>auto pickup."
 
 #Toggle Message - /autosmelt
-msgAutoSmeltEnable: "&7You have&a enabled &7auto smelt."
-msgAutoSmeltDisable: "&7You have&c disabled &7auto smelt."
+msgAutoSmeltEnable: "<gray>You have <green>enabled <gray>auto smelt."
+msgAutoSmeltDisable: "<gray>You have <red>disabled <gray>auto smelt."
 
 #Toggle Message - /drops
-msgAutoMobDropsEnable: "&7You have&a enabled &7auto drops."
-msgAutoMobDropsDisable: "&7You have&c disabled &7auto drops."
+msgAutoMobDropsEnable: "<gray>You have <green>enabled <gray>auto drops."
+msgAutoMobDropsDisable: "<gray>You have <red>disabled <gray>auto drops."
 
-#Aditional toggling messages
-msgAutoEnable: "&7Auto pickup has been automatically&a enabled&7."
+#Additional toggling messages
+msgAutoEnable: "<gray>Auto pickup has been automatically <green>enabled<gray>."
 doAutoEnableMSG: true
-msgEnabledJoinMSG: "&7Auto pickup has been automatically&a enabled&7."
+msgEnabledJoinMSG: "<gray>Auto pickup has been automatically <green>enabled<gray>."
 doEnabledOnJoinMSG: true
 
 #Reload Config Message
-msgReload: "&cReloaded Config"
+msgReload: "<red>Reloaded Config"
 
-#Fully Inventory Message
-msgFullInv: "&7Your inventory is full!"
+#Full Inventory Message
+msgFullInv: "<gray>Your inventory is full!"
 doFullInvMSG: true
 titlebar:
   doTitleBar: false
-  line1: "&cWarning"
-  line2: "&7Inventory is full!"
+  line1: "<red>Warning"
+  line2: "<gray>Inventory is full!"
 
 #This is most useful for prison servers! -- This setting is not normally recommended
 #This feature voids any extra blocks broken when /auto is enabled and the inventory is full!
@@ -55,11 +55,10 @@ usingSilkSpawnerPlugin: true
 #If set to true mobs will naturally drop XP
 ignoreMobXPDrops: false
 
-#Plase does not have permission
-msgNoperms: "&cYou don't have permission to use this command"
+#Please does not have permission
+msgNoperms: "<red>You don't have permission to use this command"
 
 #Require Permissions | Do players require permission to run commands?
 requirePerms:
   autopickup: true
   auto-reload: true
-

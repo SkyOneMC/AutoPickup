@@ -11,18 +11,18 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+
+// TODO: Convertire a DB
 public class PickupPlayer {
 
     private static final AutoPickup plugin = AutoPickup.getPlugin(AutoPickup.class);
     private static final Logger log = Logger.getLogger("Minecraft");
 
-    private Player player;
-    private UUID uuid;
-    private File playerData;
+    private final UUID uuid;
+    private final File playerData;
 
     public PickupPlayer(Player p){
-        player = p;
-        uuid = player.getUniqueId();
+        uuid = p.getUniqueId();
         playerData = new File(plugin.getDataFolder()+File.separator+"PlayerData"+File.separator+uuid+".yml");
     }
 

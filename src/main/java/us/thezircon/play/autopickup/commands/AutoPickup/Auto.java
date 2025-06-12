@@ -10,6 +10,7 @@ import us.thezircon.play.autopickup.commands.AutoPickup.subcommands.drops;
 import us.thezircon.play.autopickup.commands.AutoPickup.subcommands.reload;
 import us.thezircon.play.autopickup.commands.AutoPickup.subcommands.smelt;
 import us.thezircon.play.autopickup.commands.CMDManager;
+import us.thezircon.play.autopickup.utils.Lang;
 import us.thezircon.play.autopickup.utils.PickupPlayer;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ public class Auto implements TabExecutor{
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    private ArrayList<CMDManager> subcommands = new ArrayList<>();
+    private final ArrayList<CMDManager> subcommands = new ArrayList<>();
 
     public Auto(){
         subcommands.add(new reload());
@@ -42,23 +43,24 @@ public class Auto implements TabExecutor{
             }
         } else {
             // Toggle Auto
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
+            if (sender instanceof Player player) {
                 PickupPlayer PP = new PickupPlayer(player);
                 if ((player.hasPermission("autopickup.pickup.mined")) || (!requirePermsAUTO)) {
                     //Does have perm
                     if (PLUGIN.autopickup_list.contains(player)) {
                         PLUGIN.autopickup_list.remove(player);
-                        player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getAutoPickupDisable());
+                        PLUGIN.getMsg().send(player, Lang.AUTO_PICKUP_DISABLE);
                         PP.setEnabled(false);
                     } else if (!PLUGIN.autopickup_list.contains(player)) {
                         PLUGIN.autopickup_list.add(player);
-                        player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getAutoPickupEnable());
+                        PLUGIN.getMsg().send(player, Lang.AUTO_PICKUP_ENABLE);
                         PP.setEnabled(true);
                     }
                 } else {
-                    player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getNoPerms());
+                    PLUGIN.getMsg().send(player, Lang.NO_PERMS);
                 }
+            } else {
+                PLUGIN.getMsg().sendToConsole(PLUGIN.getMsg().getNoConsoleMessage());
             }
         }
 

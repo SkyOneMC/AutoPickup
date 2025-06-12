@@ -5,7 +5,7 @@ prefix: AutoPickup
 authors: [BUTTERFIELD8]
 description: Automatically pickup broken blocks.
 website: https://discord.gg/ncHH4FP
-api-version: 1.13
+api-version: 1.21
 softdepend: [SuperiorSkyblock2, BentoBox, LockettePro, UpgradeableHoppers, PlaceholderAPI, Jobs, MythicMobs]
 commands:
   autopickup:

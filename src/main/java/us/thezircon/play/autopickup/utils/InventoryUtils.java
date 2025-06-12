@@ -12,51 +12,50 @@ import us.thezircon.play.autopickup.AutoPickup;
 import java.util.HashMap;
 
 public class InventoryUtils {
-    private static final long cooldown = 15000; // 15 sec
+    private static final long COOLDOWN_MILLIS = 15_000L; // 15 seconds
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
     public static void handleItemOverflow(Location loc, Player player, boolean doFullInvMSG, HashMap<Integer, ItemStack> leftOver, AutoPickup plugin) {
-        for (ItemStack item : leftOver.values()) {
-            player.getWorld().dropItemNaturally(loc, item);
-        }
-        if (doFullInvMSG) {
-            long secondsLeft;
-            if (AutoPickup.lastInvFullNotification.containsKey(player.getUniqueId())) {
-                secondsLeft = (AutoPickup.lastInvFullNotification.get(player.getUniqueId()) / 1000) + cooldown / 1000 - (System.currentTimeMillis() / 1000);
-            } else {
-                secondsLeft = 0;
-            }
-            if (secondsLeft <= 0) {
-                player.sendMessage(plugin.getMsg().getPrefix() + " " + plugin.getMsg().getFullInventory());
-                AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
-            }
+        // Drop leftover items at location
+        leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
+
+        if (!doFullInvMSG) return;
+
+        long lastNotification = AutoPickup.lastInvFullNotification.getOrDefault(player.getUniqueId(), 0L);
+        long timeSinceLast = System.currentTimeMillis() - lastNotification;
+
+        if (timeSinceLast >= COOLDOWN_MILLIS) {
+            // Using Adventure Component here could be an improvement if plugin.getMsg() supports it.
+            PLUGIN.getMsg().send(player, Lang.FULL_INVENTORY);
+            AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
         }
     }
 
+    private static boolean isMendable(ItemStack item) {
+        if (item == null) return false;
+        if (!item.containsEnchantment(Enchantment.MENDING)) return false;
+        ItemMeta meta = item.getItemMeta();
+        return meta instanceof Damageable;
+    }
+
     public static int mend(ItemStack item, int xp) {
+        if (!isMendable(item)) return xp;
 
-        if (item.containsEnchantment(Enchantment.MENDING)) {
-            ItemMeta meta = item.getItemMeta();
-            Mendable mend[] = Mendable.values();
-            for (Mendable m : mend) {
+        ItemMeta meta = item.getItemMeta();
+        Damageable damage = (Damageable) meta;
+        int damageAmount = damage.getDamage();
 
-                if (item == null) {
-                    continue;
-                }
+        int repairAmount = Math.min(xp, damageAmount);
+        int newDamage = damageAmount - repairAmount;
 
-                if (item.getType().toString().equals(m.toString())) {
-                    Damageable damage = (Damageable) meta;
-                    int min = Math.min(xp, damage.getDamage());
-                    if ((damage.getDamage() - min == 0) && damage.hasDamage()) {
-                        fix(item);
-                    } else {
-                        damage.setDamage(damage.getDamage() - min);
-                    }
-                    xp -= min;
-                    item.setItemMeta(meta);
-                }
-            }
+        if (newDamage <= 0 && damageAmount > 0) {
+            fix(item);
+        } else {
+            damage.setDamage(newDamage);
+            item.setItemMeta(meta);
         }
+
+        xp -= repairAmount;
         return xp;
     }
 
@@ -65,25 +64,22 @@ public class InventoryUtils {
             @Override
             public void run() {
                 ItemMeta meta = item.getItemMeta();
-                Damageable damage = (Damageable) meta;
-                damage.setDamage(0);
-                item.setItemMeta(meta);
+                if (meta instanceof Damageable damage) {
+                    damage.setDamage(0);
+                    item.setItemMeta(meta);
+                }
             }
         }.runTaskLater(PLUGIN, 1);
     }
 
     public static void applyMending(Player player, int xp) {
-        player.giveExp(xp); // Give player XP
+        player.giveExp(xp); // Give player XP first
 
-        // Mend
-        InventoryUtils.mend(player.getInventory().getItemInMainHand(), xp);
-        InventoryUtils.mend(player.getInventory().getItemInOffHand(), xp);
-        ItemStack[] armor = player.getInventory().getArmorContents();
-        for (ItemStack i : armor) {
-            try {
-                mend(i, xp);
-            } catch (NullPointerException ignored) {
-            }
+        mend(player.getInventory().getItemInMainHand(), xp);
+        mend(player.getInventory().getItemInOffHand(), xp);
+
+        for (ItemStack armorPiece : player.getInventory().getArmorContents()) {
+            mend(armorPiece, xp);
         }
     }
 }

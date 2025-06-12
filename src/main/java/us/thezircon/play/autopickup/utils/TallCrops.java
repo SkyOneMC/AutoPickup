@@ -1,57 +1,25 @@
 package us.thezircon.play.autopickup.utils;
 
-import org.bukkit.Bukkit;
+import lombok.Getter;
 import org.bukkit.Material;
 
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.List;
 
+@Getter
 public class TallCrops {
 
-    public ArrayList<Material> verticalReq = new ArrayList<>();
-    public ArrayList<Material> verticalReqDown = new ArrayList<>();
+    private final HashSet<Material> verticalReq = new HashSet<>(List.of(Material.KELP, Material.KELP_PLANT,
+            Material.BAMBOO, Material.BAMBOO_SAPLING)
+    );
 
-    public TallCrops () {
-         if (
-                Bukkit.getVersion().contains("1.14") ||
-                Bukkit.getVersion().contains("1.15") ||
-                Bukkit.getVersion().contains("1.16") ||
-                Bukkit.getVersion().contains("1.17") ||
-                Bukkit.getVersion().contains("1.18") ||
-                Bukkit.getVersion().contains("1.19") ||
-                Bukkit.getVersion().contains("1.20") ||
-                Bukkit.getVersion().contains("1.21")
-        ) {
-            verticalReq.add(Material.KELP);
-            verticalReq.add(Material.KELP_PLANT);
-            verticalReq.add(Material.BAMBOO);
-            verticalReq.add(Material.BAMBOO_SAPLING);
-        }else if(Bukkit.getVersion().contains("1.13")) {
-            verticalReq.add(Material.KELP);
-            verticalReq.add(Material.KELP_PLANT);
-        }
-    }
-
-    public ArrayList<Material> getVerticalReq() {
-        return verticalReq;
-    }
-
-    public ArrayList<Material> getVerticalReqDown() {
-        return verticalReqDown;
-    }
+    private final HashSet<Material> verticalReqDown = new HashSet<>(List.of(
+            Material.TWISTING_VINES, Material.TWISTING_VINES_PLANT, Material.WEEPING_VINES, Material.WEEPING_VINES_PLANT)
+    );
 
     public static Material checkAltType(Material material) {
-        if (
-                Bukkit.getVersion().contains("1.16") ||
-                        Bukkit.getVersion().contains("1.17") ||
-                        Bukkit.getVersion().contains("1.18") ||
-                        Bukkit.getVersion().contains("1.19") ||
-                        Bukkit.getVersion().contains("1.20") ||
-                        Bukkit.getVersion().contains("1.21")
-        ) {
-            if (material == Material.BAMBOO_SAPLING) {
-                return Material.BAMBOO;
-            }
+        if (material == Material.BAMBOO_SAPLING) {
+            return Material.BAMBOO;
         }
         return material;
     }

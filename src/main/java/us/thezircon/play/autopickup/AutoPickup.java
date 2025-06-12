@@ -1,6 +1,7 @@
 package us.thezircon.play.autopickup;
 
-import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
+import lombok.Getter;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -20,7 +21,6 @@ import us.thezircon.play.autopickup.utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -30,24 +30,17 @@ public final class AutoPickup extends JavaPlugin {
     public HashSet<Player> autopickup_list = new HashSet<>(); // Blocks
     public HashSet<Player> autopickup_list_mobs = new HashSet<>(); // Mobs
     public HashSet<Player> auto_smelt_blocks = new HashSet<>(); // AutoSmelt - Blocks
-    public Messages messages = null;
+
+    @Getter
+    private Messages msg;
+
     public boolean UP2Date = true;
-    public TallCrops crops;
 
-    public static boolean usingUpgradableHoppers = false; // UpgradableHoppers Patch
-    public static boolean usingLocketteProByBrunyman = false; // LockettePro Patch
-    public static boolean usingBentoBox = false; // BentoBox - AOneBlock Patch
-    public static boolean usingQuickShop = false; //QuickShop - Ghost_chu (reremake)
-    public static boolean usingEpicFurnaces = false; //EpicFurnaces - Songoda
-    public static boolean usingWildChests = false; // WildChests - BG Development
-    public static boolean usingMythicMobs = false; // MythicMobs
-    public static boolean usingSSB2OneBlock = false; //SuperiorSkyblock2
+    @Getter
+    private TallCrops crops;
 
-
-    //public static boolean usingPFHoppers = false; // Play.PeacefulFarms.Net
-    //public static boolean usingPFMoreHoppers = false; // Patch for PF
-
-    public static boolean usingPlaceholderAPI = false; // Papi - clip
+    @Getter
+    private PluginHooks pluginHooks;
 
     public static ArrayList<String> worldsBlacklist = null;
 
@@ -55,142 +48,129 @@ public final class AutoPickup extends JavaPlugin {
     public static HashMap<String, PickupObjective> customItemPatch = new HashMap<>();
     public static HashSet<UUID> droppedItems = new HashSet<>();
 
-    // Cache smeling recipie list
+    // Cache smelting recipe list
     public static final Map<Material, FurnaceRecipe> smeltRecipeCache = new HashMap<>();
 
     // Notification Cooldown
     public static WeakHashMap<UUID, Long> lastInvFullNotification = new WeakHashMap<>();
 
+    @Getter
     private static AutoPickup instance;
+
+    @Getter
+    private static BukkitAudiences audiences;
+
+    // blacklist.yml
+    private File fileBlacklist;
+    private FileConfiguration confBlacklist;
+
+    // papi.yml
+    private File filePAPI;
+    private FileConfiguration confPAPI;
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
         instance = this;
+        audiences = BukkitAudiences.create(this);
 
-        // Load Configuration Files
+        // Load config files
         getConfig().options().copyDefaults();
         saveDefaultConfig();
+
         createBlacklist();
         createPlayerDataDir();
 
-        // PAPI Check
-        if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
+        // Initialize hooks
+        pluginHooks = new PluginHooks();
+
+        if (pluginHooks.isUsingPlaceholderAPI()) {
             createPAPI();
             new AutoPickupExpansion().register();
         }
 
-        // UpgradableHoppers Patch
-        if ((getServer().getPluginManager().getPlugin("UpgradeableHoppers") != null)) {
-            usingUpgradableHoppers = true;
-        }
-        // LockettePro Patch
-        if ((getServer().getPluginManager().getPlugin("LockettePro") != null)) {
-            usingLocketteProByBrunyman = true;
-        }
-        // BentoBox - AOneBlock Patch
-        if ((getServer().getPluginManager().getPlugin("BentoBox") != null)) {
-            usingBentoBox = true;
-        }
-        // QuickShop - QuickShop Patch
-        if ((getServer().getPluginManager().getPlugin("QuickShop") != null)) {
-            usingQuickShop = true;
-        }
+        // Initialize Messages
+        msg = new Messages();
 
-        // EpicFurnaces - EpicFurnaces Patch
-        if ((getServer().getPluginManager().getPlugin("EpicFurnaces") != null)) {
-            usingEpicFurnaces = true;
-        }
+        // Register listeners
+        registerListeners();
 
-        // WildChests - WildChests Patch
-        if ((getServer().getPluginManager().getPlugin("WildChests") != null)) {
-            usingWildChests = true;
-        }
-
-        // For placeholders
-        if ((getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)) {
-            usingPlaceholderAPI = true;
-        }
-
-        // MythicMobs
-        if ((getServer().getPluginManager().getPlugin("MythicMobs") != null)) {
-            usingMythicMobs = true;
-        }
-
-        // SuperiorSkyblock2
-        if ((getServer().getPluginManager().getPlugin("SuperiorSkyblock2") != null)) {
-            if (SuperiorSkyblockAPI.getModules().getModule("OneBlock") != null) {
-                usingSSB2OneBlock = true;
-            }
-        }
-
-        // Peaceful Farms - Hoppers Patch
-        // PFHoppers
-        /*if ((getServer().getPluginManager().getPlugin("PFHoppers") != null)) {
-            usingPFHoppers = true;
-        }*/
-        // PFMoreHoppers
-        /*if ((getServer().getPluginManager().getPlugin("PFMoreHoppers") != null)) {
-            usingPFMoreHoppers = true;
-        }*/
-
-        messages = new Messages();
-
-        // Listeners
-        getServer().getPluginManager().registerEvents(new BlockDropItemEventListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerJoinEventListener(), this);
-        getServer().getPluginManager().registerEvents(new BlockBreakEventListener(), this);
-        getServer().getPluginManager().registerEvents(new EntityDeathEventListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerInteractEventListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerDropItemEventListener(), this);
-        getServer().getPluginManager().registerEvents(new ItemSpawnEventListener(), this);
-        getServer().getPluginManager().registerEvents(new EntityDropItemEventListener(), this);
-
-
-        if (usingMythicMobs) {
-            getServer().getPluginManager().registerEvents(new MythicMobListener(), this);
-        }
-
-        // Commands
+        // Register commands
         getCommand("autopickup").setExecutor(new Auto());
         getCommand("autodrops").setExecutor(new AutoDrops());
         getCommand("autosmelt").setExecutor(new AutoSmelt());
 
-        // Crops by version
+        // Initialize Crops for versions
         crops = new TallCrops();
 
-        //bStats
-        Metrics metrics = new Metrics(this, 5914);
+        // Metrics bStats
+        new Metrics(this, 5914);
 
-        // Version Check
-        String pluginName = this.getName();
+        // Version check async
         new BukkitRunnable() {
             @Override
             public void run() {
                 try {
-                    VersionChk.checkVersion(pluginName, 70157);
-                } catch (UnknownHostException e) {
-                    VersionChk.noConnection();
+                    VersionChk.checkVersionAsync(getName(), 70157);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }.run();
+        }.runTaskAsynchronously(this);
 
-        // Worlds blacklist
+        // Load worlds blacklist
         if (getBlacklistConf().contains("BlacklistedWorlds")) {
             worldsBlacklist = (ArrayList<String>) getBlacklistConf().getList("BlacklistedWorlds");
         }
 
-        // Pickup Objective Cleaner
+        // Cleanup tasks
+        scheduleCleanupTasks();
+
+        // Load auto smelt furnace recipes cache
+        AutoSmeltUtils.loadFurnaceRecipes(smeltRecipeCache);
+    }
+
+    @Override
+    public void onDisable() {
+        // Close any open audiences (for PlaceholderAPI, etc.)
+        if (audiences != null) {
+            audiences.close();
+        }
+
+        // Cancel any ongoing tasks that could be running asynchronously
+        Bukkit.getScheduler().cancelTasks(this);
+
+        // Optionally, you can notify the server or log an event indicating the plugin is disabled.
+        getLogger().info(getName() + " has been disabled.");
+    }
+
+    private void registerListeners() {
+        var pm = getServer().getPluginManager();
+
+        pm.registerEvents(new BlockDropItemEventListener(), this);
+        pm.registerEvents(new PlayerJoinEventListener(), this);
+        pm.registerEvents(new BlockBreakEventListener(), this);
+        pm.registerEvents(new EntityDeathEventListener(), this);
+        pm.registerEvents(new PlayerInteractEventListener(), this);
+        pm.registerEvents(new PlayerDropItemEventListener(), this);
+        pm.registerEvents(new ItemSpawnEventListener(), this);
+        pm.registerEvents(new EntityDropItemEventListener(), this);
+
+        if (pluginHooks.isUsingMythicMobs()) {
+            pm.registerEvents(new MythicMobListener(), this);
+        }
+    }
+
+    private void scheduleCleanupTasks() {
+        // Pickup Objective Cleaner - runs every 15 seconds asynchronously
         new BukkitRunnable() {
             @Override
             public void run() {
-                customItemPatch.keySet().removeIf(key -> (Duration.between(Instant.now(), customItemPatch.get(key).getCreatedAt()).getSeconds() < -15));
+                customItemPatch.keySet().removeIf(key ->
+                        Duration.between(Instant.now(), customItemPatch.get(key).getCreatedAt()).getSeconds() < -15);
             }
-        }.runTaskTimerAsynchronously(this, 300L, 300L); // 15 sec
+        }.runTaskTimerAsynchronously(this, 300L, 300L);
 
-        // Dropped items cleaner ****
+        // Dropped Items Cleaner - runs every 5 minutes on main thread
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -201,24 +181,10 @@ public final class AutoPickup extends JavaPlugin {
                     });
                 } catch (NullPointerException ignored) {}
             }
-        }.runTaskTimer(this, 6000L, 6000L); // 5 min
-
-        // Load auto smelt cache
-        AutoSmeltUtils.loadFurnaceRecipes(smeltRecipeCache);
-
+        }.runTaskTimer(this, 6000L, 6000L);
     }
 
-
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
-    }
-
-    //blacklist.yml
-    private File fileBlacklist;
-    private FileConfiguration confBlacklist;
-
+    // blacklist.yml related methods
     public FileConfiguration getBlacklistConf() {
         return this.confBlacklist;
     }
@@ -230,7 +196,7 @@ public final class AutoPickup extends JavaPlugin {
             saveResource("blacklist.yml", false);
         }
 
-        confBlacklist= new YamlConfiguration();
+        confBlacklist = new YamlConfiguration();
         try {
             confBlacklist.load(fileBlacklist);
         } catch (IOException | InvalidConfigurationException e) {
@@ -238,14 +204,11 @@ public final class AutoPickup extends JavaPlugin {
         }
     }
 
-    public void blacklistReload(){
+    public void blacklistReload() {
         confBlacklist = YamlConfiguration.loadConfiguration(fileBlacklist);
     }
 
-    //papi.yml
-    private File filePAPI;
-    private FileConfiguration confPAPI;
-
+    // papi.yml related methods
     public FileConfiguration getPAPIConf() {
         return this.confPAPI;
     }
@@ -257,7 +220,7 @@ public final class AutoPickup extends JavaPlugin {
             saveResource("papi.yml", false);
         }
 
-        confPAPI= new YamlConfiguration();
+        confPAPI = new YamlConfiguration();
         try {
             confPAPI.load(filePAPI);
         } catch (IOException | InvalidConfigurationException e) {
@@ -265,26 +228,15 @@ public final class AutoPickup extends JavaPlugin {
         }
     }
 
-    public void PAPIReload(){
+    public void PAPIReload() {
         confPAPI = YamlConfiguration.loadConfiguration(filePAPI);
     }
 
+    // Player data directory
     public void createPlayerDataDir() {
         File dir = new File(getDataFolder(), "PlayerData");
         if (!dir.exists()) {
             dir.mkdirs();
         }
-    }
-
-    public TallCrops getCrops() {
-        return crops;
-    }
-
-    public Messages getMsg() {
-        return messages;
-    }
-
-    public static AutoPickup getInstance() {
-        return instance;
     }
 }

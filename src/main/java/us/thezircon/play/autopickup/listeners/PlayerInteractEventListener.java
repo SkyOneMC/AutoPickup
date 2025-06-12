@@ -21,54 +21,53 @@ public class PlayerInteractEventListener implements Listener {
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
     @EventHandler
-    public void onClick(PlayerInteractEvent e) {
+    public void onInteract(PlayerInteractEvent event) {
+        Action action = event.getAction();
 
-        if ((e.getAction().equals(Action.LEFT_CLICK_AIR) || e.getAction().equals(Action.RIGHT_CLICK_AIR))) {
+        // Only handle block interactions
+        if (action == Action.LEFT_CLICK_AIR || action == Action.RIGHT_CLICK_AIR) {
             return;
         }
 
-        Player player = e.getPlayer();
-        if (!PLUGIN.autopickup_list.contains(player)) {
+        Player player = event.getPlayer();
+
+        if (!PLUGIN.autopickup_list.contains(player) || event.getClickedBlock() == null) {
             return;
         }
 
-        Location loc = e.getClickedBlock().getLocation();
+        Location blockLocation = event.getClickedBlock().getLocation();
 
-        if (AutoPickup.worldsBlacklist!=null && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName())) {
+        // Respect world blacklist
+        if (AutoPickup.worldsBlacklist != null &&
+                AutoPickup.worldsBlacklist.contains(blockLocation.getWorld().getName())) {
             return;
         }
 
-        if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            if(e.getClickedBlock().getType() == Material.SWEET_BERRY_BUSH) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        for (Entity entity : loc.getWorld().getNearbyEntities(loc, 1, 1, 1)) {
-                            if (entity.getType().equals(EntityType.ITEM)) {
-                                Item item = (Item) entity;
-                                ItemStack items = item.getItemStack();
-                                if (items.getType().equals(Material.SWEET_BERRIES)) {
+        // Handle Sweet Berry Bush interaction
+        if (!(action == Action.RIGHT_CLICK_BLOCK &&
+                event.getClickedBlock().getType() == Material.SWEET_BERRY_BUSH))
+            return;
 
-                                    HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(items);
-                                    item.remove();
-                                    if (leftOver.keySet().size()>0) {
-                                        for (ItemStack drops : leftOver.values()) {
-                                            player.getWorld().dropItemNaturally(loc, drops);
-                                        }
-                                    }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Entity entity : blockLocation.getWorld().getNearbyEntities(blockLocation, 1, 1, 1)) {
+                    if (entity.getType() != EntityType.ITEM) continue;
 
-//                                    if (player.getInventory().firstEmpty()!=-1) {
-//                                        player.getInventory().addItem(items);
-//                                        item.remove();
-//                                    }
-                                }
+                    Item itemEntity = (Item) entity;
+                    ItemStack stack = itemEntity.getItemStack();
 
-                            }
+                    if (stack.getType() == Material.SWEET_BERRIES) {
+                        HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
+                        itemEntity.remove();
+
+                        // Drop remaining items naturally
+                        for (ItemStack remainder : leftover.values()) {
+                            player.getWorld().dropItemNaturally(blockLocation, remainder);
                         }
                     }
-                }.runTaskLater(PLUGIN, 1);
+                }
             }
+        }.runTaskLater(PLUGIN, 1); // Schedule 1 tick later to allow natural drop to occur
         }
-    }
-
 }

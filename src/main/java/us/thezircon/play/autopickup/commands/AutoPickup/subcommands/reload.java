@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.commands.CMDManager;
 import us.thezircon.play.autopickup.papi.AutoPickupExpansion;
+import us.thezircon.play.autopickup.utils.Lang;
 import us.thezircon.play.autopickup.utils.Messages;
 
 import java.util.List;
@@ -41,10 +42,10 @@ public class reload extends CMDManager {
                 PLUGIN.PAPIReload();
             }
 
-            PLUGIN.messages = new Messages();
-            sender.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getReload());
+            PLUGIN.getMsg().reloadMessages();
+            PLUGIN.getMsg().send(sender, Lang.RELOAD);
         } else {
-            sender.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getNoPerms());
+            PLUGIN.getMsg().send(sender, Lang.NO_PERMS);
         }
     }
 

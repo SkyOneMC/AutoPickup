@@ -17,30 +17,38 @@ public class EntityDropItemEventListener implements Listener {
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
     @EventHandler
-    public void onShear(PlayerShearEntityEvent e) {
-        boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
+    public void onShear(PlayerShearEntityEvent event) {
+        Player player = event.getPlayer();
 
-        if (AutoPickup.worldsBlacklist != null &&
-                AutoPickup.worldsBlacklist.contains(e.getEntity().getWorld().getName())) {
-            return;
-        }
-
-        Player player = e.getPlayer();
         if (!PLUGIN.autopickup_list.contains(player)) return;
+        if (isWorldBlacklisted(player)) return;
 
-        Iterator<ItemStack> iter = e.getDrops().iterator();
-        while (iter.hasNext()) {
-            ItemStack drop = iter.next();
+        handleDrops(event, player);
+        validatePermissionsAsync(player);
+    }
 
+    private boolean isWorldBlacklisted(Player player) {
+        return AutoPickup.worldsBlacklist != null
+                && AutoPickup.worldsBlacklist.contains(player.getWorld().getName());
+    }
+
+    private void handleDrops(PlayerShearEntityEvent event, Player player) {
+        boolean notifyFullInventory = PLUGIN.getConfig().getBoolean("doFullInvMSG");
+
+        Iterator<ItemStack> iterator = event.getDrops().iterator();
+
+        while (iterator.hasNext()) {
+            ItemStack drop = iterator.next();
             HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
-
-            iter.remove();
+            iterator.remove();
 
             if (!leftover.isEmpty()) {
-                InventoryUtils.handleItemOverflow(player.getLocation(), player, doFullInvMSG, leftover, PLUGIN);
+                InventoryUtils.handleItemOverflow(player.getLocation(), player, notifyFullInventory, leftover, PLUGIN);
             }
         }
+    }
 
+    private void validatePermissionsAsync(Player player) {
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
             if (!player.hasPermission("autopickup.pickup.mined")) {
                 PLUGIN.autopickup_list.remove(player);

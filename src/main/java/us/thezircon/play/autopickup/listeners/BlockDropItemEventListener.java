@@ -1,5 +1,9 @@
 package us.thezircon.play.autopickup.listeners;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
+import net.kyori.adventure.util.Ticks;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
@@ -11,112 +15,103 @@ import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.AutoSmeltUtils;
-import us.thezircon.play.autopickup.utils.HexFormat;
+import us.thezircon.play.autopickup.utils.Lang;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class BlockDropItemEventListener implements Listener {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
+    private static final long NOTIFY_COOLDOWN_MS = 15_000;
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onDrop(BlockDropItemEvent e) {
+    public void onDrop(BlockDropItemEvent event) {
+        Player player = event.getPlayer();
+        if (!PLUGIN.autopickup_list.contains(player)) return;
 
-        Player player = e.getPlayer();
+        Block block = event.getBlock();
+        Location location = block.getLocation();
+        if (isWorldBlacklisted(location)) return;
 
-        if (!PLUGIN.autopickup_list.contains(player)) return; // Player has auto enabled
-
-        Block block = e.getBlock();
-        boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
-        boolean doBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklisted");
-        boolean voidOnFullInv = false;
         boolean doSmelt = PLUGIN.auto_smelt_blocks.contains(player);
-
-        if (PLUGIN.getConfig().contains("voidOnFullInv")) {
-            voidOnFullInv = PLUGIN.getConfig().getBoolean("voidOnFullInv");
-        }
-
+        boolean doFullInvMsg = PLUGIN.getConfig().getBoolean("doFullInvMSG", false);
+        boolean voidOnFullInv = PLUGIN.getConfig().getBoolean("voidOnFullInv", false);
+        boolean useBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklisted", false);
         List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("Blacklisted");
 
-        Location loc = block.getLocation();
-        if (AutoPickup.worldsBlacklist!=null && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName())) {
-            return;
-        }
+        for (Item itemEntity : event.getItems()) {
+            ItemStack drop = itemEntity.getItemStack();
 
-//        if (block.getState() instanceof Container) {
-//            return; // Containers are handled in block break event
-//        }
-
-        for (Item i : e.getItems()) {
-//            i.setThrower(new UUID(0,0));
-//                if (i==null || i.isDead() || !i.isValid()) {
-//                    System.out.println("RAR " + i.getItemStack().getType() + " " + (i==null) + " "+ (i.isDead()) + " " + (!i.isValid()));
-//                    continue; // TEST
-//                }
-
-            ItemStack drop = i.getItemStack();
-
-            if (doBlacklist) { // Checks if blacklist is enabled
-                if (blacklist.contains(drop.getType().toString())) { // Stops resets the loop skipping the item & not removing it
-                    continue;
-                }
+            if (useBlacklist && blacklist.contains(drop.getType().toString())) {
+                continue;
             }
 
             if (doSmelt) {
                 drop = AutoSmeltUtils.smelt(drop, player);
             }
 
-            HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
-            if (leftOver.keySet().size()>0) {
+            HashMap<Integer, ItemStack> overflow = player.getInventory().addItem(drop);
 
-                // Check if inv is full title
-                if (PLUGIN.getConfig().contains("titlebar")) {
-                    boolean doFullInvMSGTitleBar = PLUGIN.getConfig().getBoolean("titlebar.doTitleBar");
-                    String titleLine1 = HexFormat.format(PLUGIN.getConfig().getString("titlebar.line1"));
-                    String titleLine2 = HexFormat.format(PLUGIN.getConfig().getString("titlebar.line2"));
-                    if (player.getInventory().firstEmpty() == -1) { // Checks for inventory space
-                        //Player has no space
-                        if (doFullInvMSGTitleBar) {
-                            player.sendTitle(titleLine1, titleLine2, 1, 20, 1);
-                        }
-                    }
-                }
-
-                //Player has no space
-                if (doFullInvMSG) {
-                    long secondsLeft;
-                    long cooldown = 15000; // 15 sec
-                    if (AutoPickup.lastInvFullNotification.containsKey(player.getUniqueId())) {
-                        secondsLeft = (AutoPickup.lastInvFullNotification.get(player.getUniqueId())/1000)+ cooldown/1000 - (System.currentTimeMillis()/1000);
-                    } else {
-                        secondsLeft = 0;
-                    }
-                    if (secondsLeft<=0) {
-                        player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getFullInventory());
-                        AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
-                    }
-                }
-
-                if (voidOnFullInv) {
-                    i.remove();
-                    return;
-                }
-
-                for (ItemStack item : leftOver.values()) {
-                    player.getWorld().dropItemNaturally(loc, item);
-                }
+            if (!overflow.isEmpty()) {
+                handleFullInventory(player, location, overflow, doFullInvMsg, voidOnFullInv);
             }
 
-//            if (doSmelt) {
-//                player.getInventory().addItem(AutoSmelt.smelt(drop, player));
-//            } else {
-//                player.getInventory().addItem(drop);
-//            }
-            i.remove();
+            itemEntity.remove(); // Always remove dropped item if picked up or overflow handled
+        }
+    }
+
+    private boolean isWorldBlacklisted(Location loc) {
+        List<String> blacklistedWorlds = AutoPickup.worldsBlacklist;
+        return blacklistedWorlds != null && blacklistedWorlds.contains(loc.getWorld().getName());
+    }
+
+    private void handleFullInventory(Player player, Location dropLocation, HashMap<Integer, ItemStack> overflow,
+                                     boolean doFullInvMsg, boolean voidOnFullInv) {
+
+        if (isInventoryFull(player)) {
+            sendInventoryFullTitle(player);
+            if (doFullInvMsg) sendInventoryFullMessage(player);
         }
 
+        if (voidOnFullInv) return;
 
+        for (ItemStack leftover : overflow.values()) {
+            player.getWorld().dropItemNaturally(dropLocation, leftover);
+        }
+    }
 
+    private boolean isInventoryFull(Player player) {
+        return player.getInventory().firstEmpty() == -1;
+    }
+
+    private void sendInventoryFullTitle(Player player) {
+        if (!PLUGIN.getConfig().getBoolean("titlebar.doTitleBar", false)) return;
+
+        Component title1 = PLUGIN.getMsg().get(Lang.TITLE_LINE_1);
+        Component title2 = PLUGIN.getMsg().get(Lang.TITLE_LINE_2);
+
+        Duration fadeIn = Ticks.duration(1);
+        Duration stay = Ticks.duration(20);
+        Duration fadeOut = Ticks.duration(1);
+
+        Title.Times times = Title.Times.times(fadeIn, stay, fadeOut);
+
+        Title title = Title.title(title1, title2, times);
+
+        player.showTitle(title);
+    }
+
+    private void sendInventoryFullMessage(Player player) {
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
+
+        long lastSent = AutoPickup.lastInvFullNotification.getOrDefault(uuid, 0L);
+        if ((now - lastSent) >= NOTIFY_COOLDOWN_MS) {
+            PLUGIN.getMsg().send(player, Lang.FULL_INVENTORY);
+            AutoPickup.lastInvFullNotification.put(uuid, now);
+        }
     }
 }

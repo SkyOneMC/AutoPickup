@@ -1,98 +1,120 @@
 package us.thezircon.play.autopickup.utils;
 
+import lombok.Getter;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
 
+import java.util.EnumMap;
+import java.util.Map;
+
+@Getter
 public class Messages {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
+    private static final MiniMessage MINI = MiniMessage.miniMessage();
+    private final Map<Lang, Component> messages = new EnumMap<>(Lang.class);
 
-    private String prefix;
-    private String autoPickupEnable;
-    private String autoPickupDisable;
-    private String autoEnabled;
-    private String autoReenabled;
-    private String reload;
-    private String fullInventory;
-    private String noPerms;
-
-    public String getMsgAutoDropsEnable() {
-        return msgAutoDropsEnable;
-    }
-
-    public String getMsgAutoDropsDisable() {
-        return msgAutoDropsDisable;
-    }
-
-    public String getMsgAutoSmeltEnable() {
-        return msgAutoSmeltEnable;
-    }
-
-    public String getMsgAutoSmeltDisable() {
-        return msgAutoSmeltDisable;
-    }
-
-    private String msgAutoDropsEnable;
-    private String msgAutoDropsDisable;
-    private String msgAutoSmeltEnable;
-    private String msgAutoSmeltDisable;
-
-    public String getPrefix() {
-        return prefix;
-    }
-
-    public String getAutoPickupEnable() {
-        return autoPickupEnable;
-    }
-
-    public String getAutoPickupDisable() {
-        return autoPickupDisable;
-    }
-
-    public String getAutoEnabled() {
-        return autoEnabled;
-    }
-
-    public String getAutoReenabled() {
-        return autoReenabled;
-    }
-
-    public String getReload() {
-        return reload;
-    }
-
-    public String getFullInventory() {
-        return fullInventory;
-    }
-
-    public String getNoPerms() {
-        return noPerms;
-    }
+    private Component updateNoticeMessage;
+    private Component updateClickHereMessage;
+    private final Component noConsoleMessage = Component.text("This command can only be executed by a player!", NamedTextColor.RED);
 
     public Messages() {
-        this.prefix = HexFormat.format(PLUGIN.getConfig().getString("msgPrefix"));
-        this.autoPickupEnable = HexFormat.format(PLUGIN.getConfig().getString("msgAutoPickupEnable"));
-        this.autoPickupDisable = HexFormat.format(PLUGIN.getConfig().getString("msgAutoPickupDisable"));
-        this.autoEnabled = HexFormat.format(PLUGIN.getConfig().getString("msgAutoEnable"));
-        this.autoReenabled = HexFormat.format(PLUGIN.getConfig().getString("msgEnabledJoinMSG"));
-        this.reload = HexFormat.format(PLUGIN.getConfig().getString("msgReload"));
-        this.fullInventory = HexFormat.format(PLUGIN.getConfig().getString("msgFullInv"));
-        this.noPerms = HexFormat.format(PLUGIN.getConfig().getString("msgNoperms"));
+        reloadMessages();
+        createCachedJoinMessages();
+    }
 
-        try {
-            this.msgAutoDropsEnable = HexFormat.format(PLUGIN.getConfig().getString("msgAutoMobDropsEnable"));
-            this.msgAutoDropsDisable = HexFormat.format(PLUGIN.getConfig().getString("msgAutoMobDropsDisable"));
-            this.msgAutoSmeltEnable = HexFormat.format(PLUGIN.getConfig().getString("msgAutoSmeltEnable"));
-            this.msgAutoSmeltDisable = HexFormat.format(PLUGIN.getConfig().getString("msgAutoSmeltDisable"));
-        } catch (NullPointerException e) {
-            double ver = PLUGIN.getConfig().getDouble("ConfigVersion");
-            if (ver==1.1) {
-                System.out.println("----------------------------------");
-                System.out.println("Outdated Config! V1.1 Latest: 1.2");
-                System.out.println("----------------------------------");
-                System.out.println("Check the default config on spigot!");
-            }
-            e.printStackTrace();
+    public void reloadMessages() {
+        for (Lang key : Lang.values()) {
+            messages.put(key, parseOrEmpty(key.getPath()));
+        }
+        checkConfigVersion();
+    }
+
+    private Component parseOrEmpty(String path) {
+        String raw = PLUGIN.getConfig().getString(path);
+        return (raw == null || raw.isEmpty()) ? Component.empty() : MINI.deserialize(raw);
+    }
+
+    private void checkConfigVersion() {
+        double ver = PLUGIN.getConfig().getDouble("ConfigVersion", 1.0);
+        if (ver < 1.2) {
+            PLUGIN.getLogger().warning("----------------------------------");
+            PLUGIN.getLogger().warning("Outdated Config! Your version: " + ver + " Latest: 1.2");
+            PLUGIN.getLogger().warning("Please update your config from the default on Spigot.");
+            PLUGIN.getLogger().warning("----------------------------------");
         }
     }
 
+    public void createCachedJoinMessages() {
+        String currentVersion = PLUGIN.getDescription().getVersion();
+        Component prefix = get(Lang.PREFIX);
+
+        updateNoticeMessage = prefix.append(Component.text(" Version: ", NamedTextColor.YELLOW))
+                .append(Component.text(currentVersion, NamedTextColor.RED))
+                .append(Component.text(" is not up to date. Please check your console on next startup or reload.", NamedTextColor.YELLOW));
+
+        updateClickHereMessage = Component.text("➤ Click HERE to view the latest version.", NamedTextColor.GOLD)
+                .clickEvent(ClickEvent.openUrl("https://www.spigotmc.org/resources/autopickup-1-16-support.70157/"))
+                .hoverEvent(HoverEvent.showText(Component.text("Click to open on Spigot!", NamedTextColor.YELLOW)));
+    }
+
+    // === Core Access ===
+
+    public Component get(Lang lang) {
+        return messages.getOrDefault(lang, Component.empty());
+    }
+
+    // === Messaging API ===
+
+    public void send(CommandSender sender, Lang lang) {
+        send(sender, get(lang), true);
+    }
+
+    public void send(CommandSender sender, Component component) {
+        send(sender, component, true);
+    }
+
+    public void send(CommandSender sender, Component component, boolean prefix) {
+        if (sender instanceof Player player) {
+            send(AutoPickup.getAudiences().player(player), component, prefix);
+        } else {
+            sendToConsole(component, prefix);
+        }
+    }
+
+    public void send(Audience audience, Component component) {
+        send(audience, component, true);
+    }
+
+    public void send(Audience audience, Component component, boolean prefix) {
+        Component finalMessage = prefix ? get(Lang.PREFIX).append(Component.space()).append(component) : component;
+        audience.sendMessage(finalMessage);
+    }
+
+    /**
+     * Sends a message to the server console with optional prefix.
+     */
+    public void sendToConsole(Component component, boolean prefix) {
+        CommandSender console = Bukkit.getServer().getConsoleSender();
+        Component fullMessage = prefix ? get(Lang.PREFIX).append(Component.space()).append(component) : component;
+
+        String legacyMessage = LegacyComponentSerializer.legacySection().serialize(fullMessage);
+        console.sendMessage(legacyMessage);
+    }
+
+    /**
+     * Convenience method that sends to console with prefix.
+     */
+    public void sendToConsole(Component component) {
+        sendToConsole(component, true);
+    }
 }

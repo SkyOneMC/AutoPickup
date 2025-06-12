@@ -5,6 +5,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.Lang;
 import us.thezircon.play.autopickup.utils.PickupPlayer;
 
 public class AutoDrops implements CommandExecutor {
@@ -20,8 +21,10 @@ public class AutoDrops implements CommandExecutor {
             if (player.hasPermission("autopickup.pickup.entities") || (!requirePermsAUTO)) {
                 toggle(player);
             } else {
-                player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getNoPerms());
+                PLUGIN.getMsg().send(player, Lang.NO_PERMS);
             }
+        } else {
+            PLUGIN.getMsg().sendToConsole(PLUGIN.getMsg().getNoConsoleMessage());
         }
 
         return false;
@@ -32,11 +35,11 @@ public class AutoDrops implements CommandExecutor {
         PickupPlayer PP = new PickupPlayer(player);
         if (PLUGIN.autopickup_list_mobs.contains(player)) {
             PLUGIN.autopickup_list_mobs.remove(player);
-            player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getMsgAutoDropsDisable());
+            PLUGIN.getMsg().send(player, Lang.AUTO_DROPS_DISABLE);
             PP.setEnabledEntities(false);
-        } else if (!PLUGIN.autopickup_list_mobs.contains(player)) {
+        } else {
             PLUGIN.autopickup_list_mobs.add(player);
-            player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getMsgAutoDropsEnable());
+            PLUGIN.getMsg().send(player, Lang.AUTO_DROPS_ENABLE);
             PP.setEnabledEntities(true);
         }
     }

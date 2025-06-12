@@ -20,78 +20,71 @@ public class EntityDeathEventListener implements Listener {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    //@EventHandler potential fix for WarnD skyblock
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onDeath(EntityDeathEvent e) {
+    public void onDeath(EntityDeathEvent event) {
+        Player killer = event.getEntity().getKiller();
 
-        if (e.getEntity().getKiller()==null || !(e.getEntity().getKiller().getType().equals(EntityType.PLAYER))) {
-            return;
-        }
+        if (killer == null || killer.getType() != EntityType.PLAYER) return;
+        if (!PLUGIN.autopickup_list_mobs.contains(killer)) return;
 
-        Player player = e.getEntity().getKiller();
+        if (isWorldBlacklisted(killer.getLocation())) return;
+        if (isEntityBlacklisted(event)) return;
 
-        if (!PLUGIN.autopickup_list_mobs.contains(player)) return;
+        checkPermissionsAsync(killer);
 
-        Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, new Runnable() {
-            @Override
-            public void run() {
-                boolean requirePermsAUTO = PLUGIN.getConfig().getBoolean("requirePerms.autopickup");
-                if (!requirePermsAUTO) {
-                    return;
-                }
-                if (!player.hasPermission("autopickup.pickup.entities") && !player.hasPermission("autopickup.pickup.entities.autoenabled")) {
-                    PLUGIN.autopickup_list_mobs.remove(player);
-                }
+        handleDrops(event, killer);
+        handleXp(event, killer);
+    }
+
+    private void checkPermissionsAsync(Player player) {
+        Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
+            if (!PLUGIN.getConfig().getBoolean("requirePerms.autopickup")) return;
+
+            boolean hasPermission = player.hasPermission("autopickup.pickup.entities")
+                    || player.hasPermission("autopickup.pickup.entities.autoenabled");
+
+            if (!hasPermission) {
+                PLUGIN.autopickup_list_mobs.remove(player);
             }
         });
+    }
 
+    private void handleDrops(EntityDeathEvent event, Player player) {
+        Location loc = player.getLocation();
         boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
 
-        Location loc = e.getEntity().getKiller().getLocation();
-        if (AutoPickup.worldsBlacklist!=null && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName())) {
-            return;
-        }
+        Iterator<ItemStack> iterator = event.getDrops().iterator();
 
-        if (PLUGIN.getBlacklistConf().contains("BlacklistedEntities", true)) {
-            boolean doBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklistedEntities");
-            List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("BlacklistedEntities");
+        while (iterator.hasNext()) {
+            ItemStack drop = iterator.next();
+            HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
+            iterator.remove();
 
-            if (doBlacklist && blacklist.contains(e.getEntity().getType().toString())) {
-                return;
-            }
-        }
-
-        // Drops
-        Iterator<ItemStack> iter = e.getDrops().iterator();
-        while (iter.hasNext()) {
-            ItemStack drops = iter.next();
-
-            HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drops);
-            iter.remove();
             if (!leftOver.isEmpty()) {
                 InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver, PLUGIN);
             }
-
-
-//            if (player.getInventory().firstEmpty() != -1) { // has space
-//                player.getInventory().addItem(drops);
-//                iter.remove();
-//            } else { // inv full
-//                if (doFullInvMSG) {
-//                    player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getFullInventory());
-//                }
-//                return;
-//            }
         }
-        e.getDrops().clear();
 
-        // Mend Items & Give Player XP
-        if (!PLUGIN.getConfig().getBoolean("ignoreMobXPDrops")) {
-            int xp = e.getDroppedExp();
+        event.getDrops().clear();
+    }
 
-            InventoryUtils.applyMending(player, xp);
+    private void handleXp(EntityDeathEvent event, Player player) {
+        if (PLUGIN.getConfig().getBoolean("ignoreMobXPDrops")) return;
 
-            e.setDroppedExp(0); // Remove default XP
-        }
+        int xp = event.getDroppedExp();
+        InventoryUtils.applyMending(player, xp);
+        event.setDroppedExp(0);
+    }
+
+    private boolean isWorldBlacklisted(Location loc) {
+        return AutoPickup.worldsBlacklist != null
+                && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName());
+    }
+
+    private boolean isEntityBlacklisted(EntityDeathEvent event) {
+        if (!PLUGIN.getBlacklistConf().getBoolean("doBlacklistedEntities")) return false;
+
+        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("BlacklistedEntities");
+        return blacklist.contains(event.getEntity().getType().toString());
     }
 }

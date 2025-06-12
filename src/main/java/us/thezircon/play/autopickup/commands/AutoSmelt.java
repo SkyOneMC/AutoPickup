@@ -5,6 +5,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.Lang;
 import us.thezircon.play.autopickup.utils.PickupPlayer;
 
 public class AutoSmelt implements CommandExecutor {
@@ -20,7 +21,7 @@ public class AutoSmelt implements CommandExecutor {
             if (player.hasPermission("autopickup.pickup.mined.autosmelt") || (!requirePermsAUTO)) {
                 toggle(player);
             } else {
-                player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getNoPerms());
+                PLUGIN.getMsg().send(player, Lang.NO_PERMS);
             }
         }
 
@@ -30,13 +31,14 @@ public class AutoSmelt implements CommandExecutor {
 
     public static void toggle(Player player) {
         PickupPlayer PP = new PickupPlayer(player);
-        if (PLUGIN.auto_smelt_blocks.contains(player)) {
+        boolean isAutoSmelt = PLUGIN.auto_smelt_blocks.contains(player);
+        if (isAutoSmelt) {
             PLUGIN.auto_smelt_blocks.remove(player);
-            player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getMsgAutoSmeltDisable());
+            PLUGIN.getMsg().send(player, Lang.AUTO_SMELT_DISABLE);
             PP.setEnabledAutoSmelt(false);
-        } else if (!PLUGIN.auto_smelt_blocks.contains(player)) {
+        } else {
             PLUGIN.auto_smelt_blocks.add(player);
-            player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getMsgAutoSmeltEnable());
+            PLUGIN.getMsg().send(player, Lang.AUTO_SMELT_ENABLE);
             PP.setEnabledAutoSmelt(true);
         }
     }
