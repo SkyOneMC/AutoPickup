@@ -18,7 +18,6 @@ public class InventoryUtils {
     public static void handleItemOverflow(Location loc, Player player, boolean doFullInvMSG, HashMap<Integer, ItemStack> leftOver, AutoPickup plugin) {
         for (ItemStack item : leftOver.values()) {
             player.getWorld().dropItemNaturally(loc, item);
-
         }
         if (doFullInvMSG) {
             long secondsLeft;

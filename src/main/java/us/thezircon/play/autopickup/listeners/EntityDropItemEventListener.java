@@ -4,78 +4,47 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.InventoryUtils;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.UUID;
 
 public class EntityDropItemEventListener implements Listener {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    private static HashMap<UUID, UUID> player_sheep_map = new HashMap<>();
-
     @EventHandler
-    public void onSheer(PlayerShearEntityEvent e) {
-        player_sheep_map.put(e.getEntity().getUniqueId(), e.getPlayer().getUniqueId());
-    }
-
-    @EventHandler
-    public void onDrop(EntityDropItemEvent e) {
-
+    public void onShear(PlayerShearEntityEvent e) {
         boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
 
-        if (AutoPickup.worldsBlacklist!=null && AutoPickup.worldsBlacklist.contains(e.getEntity().getWorld().getName())) {
+        if (AutoPickup.worldsBlacklist != null &&
+                AutoPickup.worldsBlacklist.contains(e.getEntity().getWorld().getName())) {
             return;
         }
 
-        UUID sheep = e.getEntity().getUniqueId();
-        UUID playerUUID = player_sheep_map.remove(sheep); // Avoid duplicate lookups
-        if (playerUUID == null) return;
+        Player player = e.getPlayer();
+        if (!PLUGIN.autopickup_list.contains(player)) return;
 
-        Player player = Bukkit.getPlayer(playerUUID);
-        if (player == null) return;
+        Iterator<ItemStack> iter = e.getDrops().iterator();
+        while (iter.hasNext()) {
+            ItemStack drop = iter.next();
 
-        if (!PLUGIN.autopickup_list.contains(player)) {
-            return;
-        }
+            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
 
-        // Drops
-        ItemStack drops = e.getItemDrop().getItemStack();
-        e.getItemDrop().remove();
-        HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drops);
-        if (leftOver.keySet().size()>0) {
-            for (ItemStack item : leftOver.values()) {
-                player.getWorld().dropItemNaturally(e.getItemDrop().getLocation(), item);
-            }
-            if (doFullInvMSG) {
-                long secondsLeft;
-                long cooldown = 15000; // 15 sec
-                if (AutoPickup.lastInvFullNotification.containsKey(player.getUniqueId())) {
-                    secondsLeft = (AutoPickup.lastInvFullNotification.get(player.getUniqueId())/1000)+ cooldown/1000 - (System.currentTimeMillis()/1000);
-                } else {
-                    secondsLeft = 0;
-                }
-                if (secondsLeft<=0) {
-                    player.sendMessage(PLUGIN.getMsg().getPrefix() + " " + PLUGIN.getMsg().getFullInventory());
-                    AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
-                }
+            iter.remove();
+
+            if (!leftover.isEmpty()) {
+                InventoryUtils.handleItemOverflow(player.getLocation(), player, doFullInvMSG, leftover, PLUGIN);
             }
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, new Runnable() {
-            @Override
-            public void run() {
-                if (!player.hasPermission("autopickup.pickup.mined")) {
-                    PLUGIN.autopickup_list.remove(player);
-                }
+        Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
+            if (!player.hasPermission("autopickup.pickup.mined")) {
+                PLUGIN.autopickup_list.remove(player);
             }
         });
     }
 }
-
-
