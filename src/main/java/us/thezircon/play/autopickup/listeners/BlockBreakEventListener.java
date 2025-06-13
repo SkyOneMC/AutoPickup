@@ -40,7 +40,7 @@ public class BlockBreakEventListener implements Listener {
 //        Bukkit.getLogger().info("BlockBreakEvent 3");
 
         BlockState state = block.getState(false);
-        if (shouldSkipContainer(block, state)) return;
+        if (shouldSkipContainer(state)) return;
 //        Bukkit.getLogger().info("BlockBreakEvent 5");
 
         if (state instanceof Container) {
@@ -84,14 +84,14 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handleXpAndMending(BlockBreakEvent e, Player player, Block block) {
-        if (!PLUGIN.getConfig().getBoolean("usingSilkSpawnerPlugin") || block.getType() != Material.SPAWNER) {
+        if (!PLUGIN.getConfigManager().isUsingSilkSpawner() || block.getType() != Material.SPAWNER) {
             int xp = e.getExpToDrop();
             InventoryUtils.applyMending(player, xp);
             e.setExpToDrop(0);
         }
     }
 
-    private boolean shouldSkipContainer(Block block, BlockState state) {
+    private boolean shouldSkipContainer(BlockState state) {
         if (!(state instanceof Container)) return false;
 
         if (state instanceof ShulkerBox) return true;
@@ -101,12 +101,17 @@ public class BlockBreakEventListener implements Listener {
             return hopper.getPersistentDataContainer().has(key, PersistentDataType.STRING);
         }
 
-        return PLUGIN.getPluginHooks().isUsingWildChests() && block.getType() == Material.CHEST;
+        return false;
     }
 
     private void handleContainerLoot(BlockState state, Player player, Location loc) {
         Container container = (Container) state;
         Inventory inventory = container.getInventory();
+
+        if (PLUGIN.getPluginHooks().isUsingWildChests() && loc.getBlock().getType() == Material.CHEST) {
+            recordPickupObjective(loc, player);
+            return;
+        }
 
         for (ItemStack item : inventory.getContents()) {
             if (item != null) {
