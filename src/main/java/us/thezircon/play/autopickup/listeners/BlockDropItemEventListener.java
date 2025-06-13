@@ -27,10 +27,17 @@ public class BlockDropItemEventListener implements Listener {
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
     private static final long NOTIFY_COOLDOWN_MS = 15_000;
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDrop(BlockDropItemEvent event) {
+        if (event.isCancelled()) {
+            Bukkit.getLogger().info("BlockDropItemEvent - Cancelled");
+            return;
+        }
         Player player = event.getPlayer();
+        Bukkit.getLogger().info("BlockDropItemEvent 1");
         if (!PLUGIN.autopickup_list.contains(player)) return;
+
+        Bukkit.getLogger().info("BlockDropItemEvent 2");
 
         Block block = event.getBlock();
         Location location = block.getLocation();
@@ -43,6 +50,8 @@ public class BlockDropItemEventListener implements Listener {
         List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("Blacklisted");
 
         for (Item itemEntity : event.getItems()) {
+
+            Bukkit.getLogger().info("BlockDropItemEvent Loop");
             ItemStack drop = itemEntity.getItemStack();
 
             if (useBlacklist && blacklist.contains(drop.getType().toString())) {

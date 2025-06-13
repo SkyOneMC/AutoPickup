@@ -25,6 +25,8 @@ public class BlockBreakEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
+
+        Bukkit.getLogger().info("BlockBreakEvent");
         Player player = e.getPlayer();
         Block block = e.getBlock();
         Location loc = block.getLocation();
@@ -32,24 +34,33 @@ public class BlockBreakEventListener implements Listener {
         if (!PLUGIN.autopickup_list.contains(player) || isInBlacklistedWorld(loc) || isBlacklistedBlock(block)) {
             return;
         }
+        Bukkit.getLogger().info("BlockBreakEvent 1");
 
         handlePermissionsAsync(player);
+        Bukkit.getLogger().info("BlockBreakEvent 3");
 
         handleOneBlockPickup(loc, block, player);
+        Bukkit.getLogger().info("BlockBreakEvent 4");
 
         BlockState state = block.getState(false);
         if (shouldSkipContainer(block, state)) return;
+        Bukkit.getLogger().info("BlockBreakEvent 5");
 
         if (state instanceof Container) {
             handleContainerLoot(state, player, loc);
+            Bukkit.getLogger().info("BlockBreakEvent 6");
             return;
         }
+        Bukkit.getLogger().info("BlockBreakEvent 7");
 
         handleXpAndMending(e, player, block);
+        Bukkit.getLogger().info("BlockBreakEvent 8");
 
         handleVerticalCropHarvest(e, player);
+        Bukkit.getLogger().info("BlockBreakEvent 9");
 
         recordPickupObjective(loc, player);
+        Bukkit.getLogger().info("BlockBreakEvent 10");
     }
 
     private boolean isInBlacklistedWorld(Location loc) {
@@ -63,6 +74,8 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handlePermissionsAsync(Player player) {
+        Bukkit.getLogger().info("BlockBreakEvent Async 2");
+
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
             if (!PLUGIN.getConfig().getBoolean("requirePerms.autopickup")) return;
             if (!player.hasPermission("autopickup.pickup.mined.autoenabled")) {

@@ -56,9 +56,8 @@ public class Messages {
 
     public void createCachedJoinMessages() {
         String currentVersion = PLUGIN.getDescription().getVersion();
-        Component prefix = get(Lang.PREFIX);
 
-        updateNoticeMessage = prefix.append(Component.text(" Version: ", NamedTextColor.YELLOW))
+        updateNoticeMessage = Component.text(" Version: ", NamedTextColor.YELLOW)
                 .append(Component.text(currentVersion, NamedTextColor.RED))
                 .append(Component.text(" is not up to date. Please check your console on next startup or reload.", NamedTextColor.YELLOW));
 

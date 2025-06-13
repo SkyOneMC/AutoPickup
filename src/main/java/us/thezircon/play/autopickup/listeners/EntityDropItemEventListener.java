@@ -4,55 +4,77 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
-import us.thezircon.play.autopickup.utils.InventoryUtils;
 
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.UUID;
 
 public class EntityDropItemEventListener implements Listener {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
+    private static HashMap<UUID, UUID> player_sheep_map = new HashMap<>();
+
     @EventHandler
-    public void onShear(PlayerShearEntityEvent event) {
-        Player player = event.getPlayer();
-
-        if (!PLUGIN.autopickup_list.contains(player)) return;
-        if (isWorldBlacklisted(player)) return;
-
-        handleDrops(event, player);
-        validatePermissionsAsync(player);
+    public void onSheer(PlayerShearEntityEvent e) {
+        player_sheep_map.put(e.getEntity().getUniqueId(), e.getPlayer().getUniqueId());
     }
 
-    private boolean isWorldBlacklisted(Player player) {
-        return AutoPickup.worldsBlacklist != null
-                && AutoPickup.worldsBlacklist.contains(player.getWorld().getName());
-    }
+    @EventHandler
+    public void onDrop(EntityDropItemEvent e) {
 
-    private void handleDrops(PlayerShearEntityEvent event, Player player) {
-        boolean notifyFullInventory = PLUGIN.getConfig().getBoolean("doFullInvMSG");
+        Bukkit.getLogger().info("EntityDropItemEvent");
 
-        Iterator<ItemStack> iterator = event.getDrops().iterator();
+        boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
 
-        while (iterator.hasNext()) {
-            ItemStack drop = iterator.next();
-            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
-            iterator.remove();
+        if (AutoPickup.worldsBlacklist!=null && AutoPickup.worldsBlacklist.contains(e.getEntity().getWorld().getName())) {
+            return;
+        }
 
-            if (!leftover.isEmpty()) {
-                InventoryUtils.handleItemOverflow(player.getLocation(), player, notifyFullInventory, leftover, PLUGIN);
+        UUID sheep = e.getEntity().getUniqueId();
+        UUID playerUUID = player_sheep_map.remove(sheep); // Avoid duplicate lookups
+        if (playerUUID == null) return;
+
+        Player player = Bukkit.getPlayer(playerUUID);
+        if (player == null) return;
+
+        if (!PLUGIN.autopickup_list.contains(player)) {
+            return;
+        }
+
+        // Drops
+        ItemStack drops = e.getItemDrop().getItemStack();
+        e.getItemDrop().remove();
+        HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drops);
+        if (leftOver.keySet().size()>0) {
+            for (ItemStack item : leftOver.values()) {
+                player.getWorld().dropItemNaturally(e.getItemDrop().getLocation(), item);
+            }
+            if (doFullInvMSG) {
+                long secondsLeft;
+                long cooldown = 15000; // 15 sec
+                if (AutoPickup.lastInvFullNotification.containsKey(player.getUniqueId())) {
+                    secondsLeft = (AutoPickup.lastInvFullNotification.get(player.getUniqueId())/1000)+ cooldown/1000 - (System.currentTimeMillis()/1000);
+                } else {
+                    secondsLeft = 0;
+                }
+                if (secondsLeft<=0) {
+                    AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
+                }
             }
         }
-    }
 
-    private void validatePermissionsAsync(Player player) {
-        Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
-            if (!player.hasPermission("autopickup.pickup.mined")) {
-                PLUGIN.autopickup_list.remove(player);
+        Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, new Runnable() {
+            @Override
+            public void run() {
+                if (!player.hasPermission("autopickup.pickup.mined")) {
+                    PLUGIN.autopickup_list.remove(player);
+                }
             }
         });
     }
 }
+
