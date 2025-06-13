@@ -11,7 +11,6 @@ import us.thezircon.play.autopickup.utils.InventoryUtils;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 public class MythicMobListener implements Listener {
 
@@ -23,10 +22,10 @@ public class MythicMobListener implements Listener {
         if (!PLUGIN.autopickup_list_mobs.contains(player)) return;
 
         Location location = player.getLocation();
-        if (isWorldBlacklisted(location)) return;
+        if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
         if (isMobBlacklisted(event)) return;
 
-        boolean showFullInvMsg = PLUGIN.getConfig().getBoolean("doFullInvMSG");
+        boolean showFullInvMsg = PLUGIN.getConfigManager().isDoFullInvMsg();
 
         Iterator<ItemStack> iterator = event.getDrops().iterator();
         while (iterator.hasNext()) {
@@ -40,17 +39,8 @@ public class MythicMobListener implements Listener {
         }
     }
 
-    private boolean isWorldBlacklisted(Location location) {
-        List<String> blacklist = AutoPickup.worldsBlacklist;
-        return blacklist != null && blacklist.contains(location.getWorld().getName());
-    }
-
     private boolean isMobBlacklisted(MythicMobDeathEvent event) {
-        if (!PLUGIN.getBlacklistConf().contains("BlacklistedEntities", true)) return false;
-
-        boolean doBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklistedEntities");
-        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("BlacklistedEntities");
-
-        return doBlacklist && blacklist.contains(event.getMobType().toString());
+        return PLUGIN.getConfigManager().isDoBlacklistedEntities() &&
+                PLUGIN.getConfigManager().getBlacklistedEntities().contains(event.getMobType().toString());
     }
 }

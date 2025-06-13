@@ -14,7 +14,6 @@ import us.thezircon.play.autopickup.utils.InventoryUtils;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 public class EntityDeathEventListener implements Listener {
 
@@ -27,7 +26,7 @@ public class EntityDeathEventListener implements Listener {
         if (killer == null || killer.getType() != EntityType.PLAYER) return;
         if (!PLUGIN.autopickup_list_mobs.contains(killer)) return;
 
-        if (isWorldBlacklisted(killer.getLocation())) return;
+        if (PLUGIN.getConfigManager().isWorldBlacklisted(killer.getLocation())) return;
         if (isEntityBlacklisted(event)) return;
 
         checkPermissionsAsync(killer);
@@ -76,15 +75,8 @@ public class EntityDeathEventListener implements Listener {
         event.setDroppedExp(0);
     }
 
-    private boolean isWorldBlacklisted(Location loc) {
-        return AutoPickup.worldsBlacklist != null
-                && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName());
-    }
-
     private boolean isEntityBlacklisted(EntityDeathEvent event) {
-        if (!PLUGIN.getBlacklistConf().getBoolean("doBlacklistedEntities")) return false;
-
-        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("BlacklistedEntities");
-        return blacklist.contains(event.getEntity().getType().toString());
+        return PLUGIN.getConfigManager().isDoBlacklistedEntities()
+                && PLUGIN.getConfigManager().getBlacklistedEntities().contains(event.getEntity().getType().toString());
     }
 }

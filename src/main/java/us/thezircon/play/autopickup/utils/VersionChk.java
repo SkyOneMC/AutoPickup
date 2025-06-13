@@ -6,11 +6,9 @@ import us.thezircon.play.autopickup.AutoPickup;
 import org.bukkit.Bukkit;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
 import java.util.logging.Logger;
 
 import static com.google.common.net.HttpHeaders.USER_AGENT;
@@ -66,12 +64,6 @@ public class VersionChk {
                             }
                         }
                     }
-
-                    try {
-                        updateConfigIfNeeded();
-                    } catch (Exception e) {
-                        log.warning("Failed to update config: " + e.getMessage());
-                    }
                 });
 
             } catch (Exception e) {
@@ -100,33 +92,6 @@ public class VersionChk {
                 content.append(line);
             }
             return content.toString();
-        }
-    }
-
-    private static void updateConfigIfNeeded() throws Exception {
-        double configVersion = PLUGIN.getConfig().getDouble("ConfigVersion");
-        boolean updated = false;
-
-        if (configVersion <= 1.2) {
-            PLUGIN.getConfig().set("ConfigVersion", 1.3);
-            PLUGIN.getBlacklistConf().set("doAutoSmeltBlacklist", false);
-            PLUGIN.getBlacklistConf().set("AutoSmeltBlacklist", List.of("OAK_LOG"));
-            updated = true;
-        }
-        if (configVersion <= 1.3) {
-            PLUGIN.getConfig().set("ConfigVersion", 1.4);
-            PLUGIN.getBlacklistConf().set("doAutoSmeltBlacklist", false);
-            PLUGIN.getBlacklistConf().set("AutoSmeltBlacklist", List.of("OAK_LOG"));
-            PLUGIN.getConfig().set("usingSilkSpawnerPlugin", true);
-            PLUGIN.getConfig().set("ignoreMobXPDrops", false);
-            updated = true;
-        }
-
-        if (updated) {
-            File confFile = new File(PLUGIN.getDataFolder(), "config.yml");
-            File blacklistFile = new File(PLUGIN.getDataFolder(), "blacklist.yml");
-            PLUGIN.getConfig().save(confFile);
-            PLUGIN.getBlacklistConf().save(blacklistFile);
         }
     }
 

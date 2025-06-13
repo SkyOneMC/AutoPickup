@@ -5,9 +5,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.commands.CMDManager;
-import us.thezircon.play.autopickup.papi.AutoPickupExpansion;
 import us.thezircon.play.autopickup.utils.Lang;
-import us.thezircon.play.autopickup.utils.Messages;
 
 import java.util.List;
 
@@ -32,15 +30,10 @@ public class reload extends CMDManager {
 
     @Override
     public void perform(CommandSender sender, String[] args) {
-        Boolean requirePermsRELOAD = PLUGIN.getConfig().getBoolean("requirePerms.auto-reload");
-
-        if (sender.hasPermission("autopickup.admin") || !requirePermsRELOAD) {
+        if (sender.hasPermission("autopickup.admin")
+                || !PLUGIN.getConfigManager().isRequirePermsRELOAD()) {
             PLUGIN.reloadConfig();
-            PLUGIN.blacklistReload();
-
-            if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
-                PLUGIN.PAPIReload();
-            }
+            PLUGIN.getConfigManager().reload();
 
             PLUGIN.getMsg().reloadMessages();
             PLUGIN.getMsg().send(sender, Lang.RELOAD);

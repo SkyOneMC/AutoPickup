@@ -10,14 +10,15 @@ import us.thezircon.play.autopickup.utils.PickupPlayer;
 
 public class AutoPickupExpansion extends PlaceholderExpansion {
 
+    private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     private final Component trueComponent;
     private final Component falseComponent;
 
     public AutoPickupExpansion() {
-        String rawTrue = AutoPickup.getInstance().getPAPIConf().getString("papi.enabled.true", "<green>✔</green>");
-        String rawFalse = AutoPickup.getInstance().getPAPIConf().getString("papi.enabled.false", "<red>✘</red>");
+        String rawTrue = PLUGIN.getConfigManager().getPapiEnabledTrue();
+        String rawFalse =  PLUGIN.getConfigManager().getPapiEnabledFalse();
 
         this.trueComponent = miniMessage.deserialize(rawTrue);
         this.falseComponent = miniMessage.deserialize(rawFalse);

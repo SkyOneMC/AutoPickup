@@ -3,7 +3,6 @@ package us.thezircon.play.autopickup.listeners;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import net.kyori.adventure.util.Ticks;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
@@ -19,7 +18,6 @@ import us.thezircon.play.autopickup.utils.Lang;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 public class BlockDropItemEventListener implements Listener {
@@ -30,31 +28,30 @@ public class BlockDropItemEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDrop(BlockDropItemEvent event) {
         if (event.isCancelled()) {
-            Bukkit.getLogger().info("BlockDropItemEvent - Cancelled");
+//            Bukkit.getLogger().info("BlockDropItemEvent - Cancelled");
             return;
         }
         Player player = event.getPlayer();
-        Bukkit.getLogger().info("BlockDropItemEvent 1");
+//        Bukkit.getLogger().info("BlockDropItemEvent 1");
         if (!PLUGIN.autopickup_list.contains(player)) return;
 
-        Bukkit.getLogger().info("BlockDropItemEvent 2");
+//        Bukkit.getLogger().info("BlockDropItemEvent 2");
 
         Block block = event.getBlock();
         Location location = block.getLocation();
-        if (isWorldBlacklisted(location)) return;
+        if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
 
         boolean doSmelt = PLUGIN.auto_smelt_blocks.contains(player);
-        boolean doFullInvMsg = PLUGIN.getConfig().getBoolean("doFullInvMSG", false);
-        boolean voidOnFullInv = PLUGIN.getConfig().getBoolean("voidOnFullInv", false);
-        boolean useBlacklist = PLUGIN.getBlacklistConf().getBoolean("doBlacklisted", false);
-        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("Blacklisted");
+        boolean doFullInvMsg = PLUGIN.getConfigManager().isDoFullInvMsg();
+        boolean voidOnFullInv = PLUGIN.getConfigManager().isVoidOnFullInv();
+        boolean useBlacklist = PLUGIN.getConfigManager().isDoBlacklisted();
 
         for (Item itemEntity : event.getItems()) {
 
-            Bukkit.getLogger().info("BlockDropItemEvent Loop");
+//            Bukkit.getLogger().info("BlockDropItemEvent Loop");
             ItemStack drop = itemEntity.getItemStack();
 
-            if (useBlacklist && blacklist.contains(drop.getType().toString())) {
+            if (useBlacklist && PLUGIN.getConfigManager().getBlacklistedItems().contains(drop.getType().toString())) {
                 continue;
             }
 
@@ -70,11 +67,6 @@ public class BlockDropItemEventListener implements Listener {
 
             itemEntity.remove(); // Always remove dropped item if picked up or overflow handled
         }
-    }
-
-    private boolean isWorldBlacklisted(Location loc) {
-        List<String> blacklistedWorlds = AutoPickup.worldsBlacklist;
-        return blacklistedWorlds != null && blacklistedWorlds.contains(loc.getWorld().getName());
     }
 
     private void handleFullInventory(Player player, Location dropLocation, HashMap<Integer, ItemStack> overflow,

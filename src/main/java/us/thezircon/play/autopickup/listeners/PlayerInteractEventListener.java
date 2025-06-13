@@ -38,8 +38,7 @@ public class PlayerInteractEventListener implements Listener {
         Location blockLocation = event.getClickedBlock().getLocation();
 
         // Respect world blacklist
-        if (AutoPickup.worldsBlacklist != null &&
-                AutoPickup.worldsBlacklist.contains(blockLocation.getWorld().getName())) {
+        if (PLUGIN.getConfigManager().getBlacklistedWorlds().contains(blockLocation.getWorld().getName())) {
             return;
         }
 

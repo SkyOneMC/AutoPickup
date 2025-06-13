@@ -45,11 +45,10 @@ public class Messages {
     }
 
     private void checkConfigVersion() {
-        double ver = PLUGIN.getConfig().getDouble("ConfigVersion", 1.0);
-        if (ver < 1.2) {
+        double ver = PLUGIN.getConfigManager().getConfigVersion();
+        if (ver < 1.4) {
             PLUGIN.getLogger().warning("----------------------------------");
-            PLUGIN.getLogger().warning("Outdated Config! Your version: " + ver + " Latest: 1.2");
-            PLUGIN.getLogger().warning("Please update your config from the default on Spigot.");
+            PLUGIN.getLogger().warning("Outdated Config! Your version: " + ver + " Latest: 1.4");
             PLUGIN.getLogger().warning("----------------------------------");
         }
     }

@@ -1,6 +1,5 @@
 package us.thezircon.play.autopickup.listeners;
 
-import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
 import org.bukkit.*;
 import org.bukkit.block.*;
 import org.bukkit.entity.*;
@@ -8,13 +7,10 @@ import org.bukkit.event.*;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitRunnable;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
 import us.thezircon.play.autopickup.utils.PickupObjective;
 import us.thezircon.play.autopickup.utils.TallCrops;
-import world.bentobox.bentobox.BentoBox;
-import world.bentobox.bentobox.database.objects.Island;
 
 import java.time.Instant;
 import java.util.*;
@@ -23,10 +19,14 @@ public class BlockBreakEventListener implements Listener {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
     public void onBreak(BlockBreakEvent e) {
 
-        Bukkit.getLogger().info("BlockBreakEvent");
+        if (e.isCancelled()) {
+//            Bukkit.getLogger().warning("BlockBreakEvent cancelled");
+            return;
+        }
+//        Bukkit.getLogger().info("BlockBreakEvent");
         Player player = e.getPlayer();
         Block block = e.getBlock();
         Location loc = block.getLocation();
@@ -34,50 +34,46 @@ public class BlockBreakEventListener implements Listener {
         if (!PLUGIN.autopickup_list.contains(player) || isInBlacklistedWorld(loc) || isBlacklistedBlock(block)) {
             return;
         }
-        Bukkit.getLogger().info("BlockBreakEvent 1");
+//        Bukkit.getLogger().info("BlockBreakEvent 1");
 
         handlePermissionsAsync(player);
-        Bukkit.getLogger().info("BlockBreakEvent 3");
-
-        handleOneBlockPickup(loc, block, player);
-        Bukkit.getLogger().info("BlockBreakEvent 4");
+//        Bukkit.getLogger().info("BlockBreakEvent 3");
 
         BlockState state = block.getState(false);
         if (shouldSkipContainer(block, state)) return;
-        Bukkit.getLogger().info("BlockBreakEvent 5");
+//        Bukkit.getLogger().info("BlockBreakEvent 5");
 
         if (state instanceof Container) {
             handleContainerLoot(state, player, loc);
-            Bukkit.getLogger().info("BlockBreakEvent 6");
+//            Bukkit.getLogger().info("BlockBreakEvent 6");
             return;
         }
-        Bukkit.getLogger().info("BlockBreakEvent 7");
+//        Bukkit.getLogger().info("BlockBreakEvent 7");
 
         handleXpAndMending(e, player, block);
-        Bukkit.getLogger().info("BlockBreakEvent 8");
+//        Bukkit.getLogger().info("BlockBreakEvent 8");
 
         handleVerticalCropHarvest(e, player);
-        Bukkit.getLogger().info("BlockBreakEvent 9");
+//        Bukkit.getLogger().info("BlockBreakEvent 9");
 
         recordPickupObjective(loc, player);
-        Bukkit.getLogger().info("BlockBreakEvent 10");
+//        Bukkit.getLogger().info("BlockBreakEvent 10");
     }
 
     private boolean isInBlacklistedWorld(Location loc) {
-        return AutoPickup.worldsBlacklist != null && AutoPickup.worldsBlacklist.contains(loc.getWorld().getName());
+        return PLUGIN.getConfigManager().getBlacklistedWorlds().contains(loc.getWorld().getName());
     }
 
     private boolean isBlacklistedBlock(Block block) {
-        if (!PLUGIN.getBlacklistConf().getBoolean("doBlacklisted")) return false;
-        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("Blacklisted");
-        return blacklist.contains(block.getType().toString());
+        return PLUGIN.getConfigManager().isDoBlacklisted()
+                && PLUGIN.getConfigManager().getBlacklistedItems().contains(block.getType().toString());
     }
 
     private void handlePermissionsAsync(Player player) {
-        Bukkit.getLogger().info("BlockBreakEvent Async 2");
+//        Bukkit.getLogger().info("BlockBreakEvent Async 2");
 
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
-            if (!PLUGIN.getConfig().getBoolean("requirePerms.autopickup")) return;
+            if (!PLUGIN.getConfigManager().isRequirePermsAUTO()) return;
             if (!player.hasPermission("autopickup.pickup.mined.autoenabled")) {
                 PLUGIN.autopickup_list.remove(player);
             }
@@ -92,51 +88,6 @@ public class BlockBreakEventListener implements Listener {
             int xp = e.getExpToDrop();
             InventoryUtils.applyMending(player, xp);
             e.setExpToDrop(0);
-        }
-    }
-
-    private void handleOneBlockPickup(Location loc, Block block, Player player) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!PLUGIN.getPluginHooks().isUsingBentoBox()) return;
-                BentoBox bb = BentoBox.getInstance();
-                bb.getAddonsManager().getAddonByName("AOneBlock").ifPresent(addon -> {
-                    Optional<Island> optIsland = bb.getIslands().getIslandAt(loc);
-                    optIsland.ifPresent(island -> {
-                        if (island.getCenter().equals(block.getLocation())) {
-                            collectNearbyItems(loc, block, player);
-                        }
-                    });
-                });
-            }
-        }.runTaskLater(PLUGIN, 1);
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!PLUGIN.getPluginHooks().isUsingSSB2OneBlock()) return;
-                com.bgsoftware.superiorskyblock.api.island.Island island = SuperiorSkyblockAPI.getIslandAt(player.getLocation());
-                if (island == null) return;
-
-                Location oneBlockLoc = island.getCenter(SuperiorSkyblockAPI.getSettings().getWorlds().getDefaultWorldDimension()).subtract(0.5F, 1.0F, 0.5F);
-                if (oneBlockLoc.equals(block.getLocation())) {
-                    collectNearbyItems(loc, block, player);
-                }
-            }
-        }.runTaskLater(PLUGIN, 1);
-    }
-
-    private void collectNearbyItems(Location loc, Block block, Player player) {
-        boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
-        for (Entity ent : loc.getWorld().getNearbyEntities(block.getLocation().add(0, 1, 0), 1, 1, 1)) {
-            if (ent instanceof Item item) {
-                HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(item.getItemStack());
-                item.remove();
-                if (!leftOver.isEmpty()) {
-                    InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver, PLUGIN);
-                }
-            }
         }
     }
 
@@ -248,6 +199,7 @@ public class BlockBreakEventListener implements Listener {
 
     private void recordPickupObjective(Location loc, Player player) {
         String key = loc.getBlockX() + ";" + loc.getBlockY() + ";" + loc.getBlockZ() + ";" + loc.getWorld();
+//        Bukkit.getLogger().info("Chiave: " + key);
         AutoPickup.customItemPatch.put(key, new PickupObjective(loc, player, Instant.now()));
     }
 }

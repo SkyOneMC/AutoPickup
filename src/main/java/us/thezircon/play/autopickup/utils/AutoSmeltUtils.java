@@ -39,9 +39,8 @@ public class AutoSmeltUtils {
     }
 
     public static ItemStack smelt(ItemStack itemStack, Player player) {
-        List<String> blacklist = PLUGIN.getBlacklistConf().getStringList("AutoSmeltBlacklist");
-
-        if (IGNORE_MATERIALS.contains(itemStack.getType()) || blacklist.contains(itemStack.getType().toString())) {
+        if (IGNORE_MATERIALS.contains(itemStack.getType())
+                || PLUGIN.getConfigManager().getAutoSmeltBlacklist().contains(itemStack.getType().toString())) {
             return itemStack.clone();
         }
 
