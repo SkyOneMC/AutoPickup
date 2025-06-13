@@ -85,7 +85,7 @@ public class Messages {
 
     public void send(CommandSender sender, Component component, boolean prefix) {
         if (sender instanceof Player player) {
-            send(AutoPickup.getAudiences().player(player), component, prefix);
+            send((Audience) player, component, prefix);
         } else {
             sendToConsole(component, prefix);
         }

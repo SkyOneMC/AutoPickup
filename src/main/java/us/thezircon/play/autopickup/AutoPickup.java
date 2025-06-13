@@ -1,7 +1,6 @@
 package us.thezircon.play.autopickup;
 
 import lombok.Getter;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -9,6 +8,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -57,9 +57,6 @@ public final class AutoPickup extends JavaPlugin {
     @Getter
     private static AutoPickup instance;
 
-    @Getter
-    private static BukkitAudiences audiences;
-
     // blacklist.yml
     private File fileBlacklist;
     private FileConfiguration confBlacklist;
@@ -71,7 +68,6 @@ public final class AutoPickup extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        audiences = BukkitAudiences.create(this);
 
         // Load config files
         getConfig().options().copyDefaults();
@@ -131,10 +127,7 @@ public final class AutoPickup extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Close any open audiences (for PlaceholderAPI, etc.)
-        if (audiences != null) {
-            audiences.close();
-        }
+        HandlerList.unregisterAll(this);
 
         // Cancel any ongoing tasks that could be running asynchronously
         Bukkit.getScheduler().cancelTasks(this);
