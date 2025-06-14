@@ -20,12 +20,13 @@ import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class AutoPickup extends JavaPlugin {
 
-    public HashSet<Player> autopickup_list = new HashSet<>(); // Blocks
-    public HashSet<Player> autopickup_list_mobs = new HashSet<>(); // Mobs
-    public HashSet<Player> auto_smelt_blocks = new HashSet<>(); // AutoSmelt - Blocks
+    public Set<Player> autopickup_list = ConcurrentHashMap.newKeySet(); // Blocks
+    public Set<Player> autopickup_list_mobs = ConcurrentHashMap.newKeySet(); // Mobs
+    public Set<Player> auto_smelt_blocks = ConcurrentHashMap.newKeySet(); // AutoSmelt - Blocks
 
     @Getter
     private Messages msg;
@@ -41,14 +42,14 @@ public final class AutoPickup extends JavaPlugin {
     private PluginHooks pluginHooks;
 
     // Custom Items Patch
-    public static HashMap<String, PickupObjective> customItemPatch;
-    public static HashSet<UUID> droppedItems = new HashSet<>();
+    public static Map<String, PickupObjective> customItemPatch = new ConcurrentHashMap<>();
+    public static Set<UUID> droppedItems = ConcurrentHashMap.newKeySet();
 
     // Cache smelting recipe list
-    public static final Map<Material, FurnaceRecipe> smeltRecipeCache = new HashMap<>();
+    public static final Map<Material, FurnaceRecipe> smeltRecipeCache = new ConcurrentHashMap<>();
 
     // Notification Cooldown
-    public static WeakHashMap<UUID, Long> lastInvFullNotification = new WeakHashMap<>();
+    public static Map<UUID, Long> lastInvFullNotification = new ConcurrentHashMap<>();
 
     @Getter
     private static AutoPickup instance;
@@ -56,7 +57,6 @@ public final class AutoPickup extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        customItemPatch = new HashMap<>();
 
         // Initialize hooks
         pluginHooks = new PluginHooks();
@@ -143,7 +143,7 @@ public final class AutoPickup extends JavaPlugin {
                 customItemPatch.keySet().removeIf(key ->
                         Duration.between(Instant.now(), customItemPatch.get(key).getCreatedAt()).getSeconds() < -15);
             }
-        }.runTaskTimerAsynchronously(this, 300L, 300L);
+        }.runTaskTimerAsynchronously(this, 10L, 10L);
 
         // Dropped Items Cleaner - runs every 5 minutes on main thread
         new BukkitRunnable() {

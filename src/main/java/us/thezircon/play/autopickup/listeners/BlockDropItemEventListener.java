@@ -3,6 +3,7 @@ package us.thezircon.play.autopickup.listeners;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import net.kyori.adventure.util.Ticks;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Item;
@@ -28,14 +29,14 @@ public class BlockDropItemEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDrop(BlockDropItemEvent event) {
         if (event.isCancelled()) {
-//            Bukkit.getLogger().info("BlockDropItemEvent - Cancelled");
+            Bukkit.getLogger().info("BlockDropItemEvent - Cancelled");
             return;
         }
         Player player = event.getPlayer();
-//        Bukkit.getLogger().info("BlockDropItemEvent 1");
+        Bukkit.getLogger().info("BlockDropItemEvent 1");
         if (!PLUGIN.autopickup_list.contains(player)) return;
 
-//        Bukkit.getLogger().info("BlockDropItemEvent 2");
+        Bukkit.getLogger().info("BlockDropItemEvent 2");
 
         Block block = event.getBlock();
         Location location = block.getLocation();
@@ -48,8 +49,9 @@ public class BlockDropItemEventListener implements Listener {
 
         for (Item itemEntity : event.getItems()) {
 
-//            Bukkit.getLogger().info("BlockDropItemEvent Loop");
             ItemStack drop = itemEntity.getItemStack();
+
+            Bukkit.getLogger().info("BlockDropItemEvent " + drop);
 
             if (useBlacklist && PLUGIN.getConfigManager().getBlacklistedItems().contains(drop.getType().toString())) {
                 continue;

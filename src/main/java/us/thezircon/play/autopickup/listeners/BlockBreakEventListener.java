@@ -9,10 +9,9 @@ import org.bukkit.inventory.*;
 import org.bukkit.persistence.PersistentDataType;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
-import us.thezircon.play.autopickup.utils.PickupObjective;
+import us.thezircon.play.autopickup.api.AutoAPI;
 import us.thezircon.play.autopickup.utils.TallCrops;
 
-import java.time.Instant;
 import java.util.*;
 
 public class BlockBreakEventListener implements Listener {
@@ -23,10 +22,10 @@ public class BlockBreakEventListener implements Listener {
     public void onBreak(BlockBreakEvent e) {
 
         if (e.isCancelled()) {
-//            Bukkit.getLogger().warning("BlockBreakEvent cancelled");
+            Bukkit.getLogger().warning("BlockBreakEvent cancelled");
             return;
         }
-//        Bukkit.getLogger().info("BlockBreakEvent");
+        Bukkit.getLogger().info("BlockBreakEvent");
         Player player = e.getPlayer();
         Block block = e.getBlock();
         Location loc = block.getLocation();
@@ -34,30 +33,19 @@ public class BlockBreakEventListener implements Listener {
         if (!PLUGIN.autopickup_list.contains(player) || isInBlacklistedWorld(loc) || isBlacklistedBlock(block)) {
             return;
         }
-//        Bukkit.getLogger().info("BlockBreakEvent 1");
+        Bukkit.getLogger().info("BlockBreakEvent 1");
 
         handlePermissionsAsync(player);
-//        Bukkit.getLogger().info("BlockBreakEvent 3");
-
-        BlockState state = block.getState(false);
-        if (shouldSkipContainer(state)) return;
-//        Bukkit.getLogger().info("BlockBreakEvent 5");
-
-        if (state instanceof Container) {
-            handleContainerLoot(state, player, loc);
-//            Bukkit.getLogger().info("BlockBreakEvent 6");
-            return;
-        }
-//        Bukkit.getLogger().info("BlockBreakEvent 7");
+        Bukkit.getLogger().info("BlockBreakEvent 3");
 
         handleXpAndMending(e, player, block);
-//        Bukkit.getLogger().info("BlockBreakEvent 8");
+        Bukkit.getLogger().info("BlockBreakEvent 8");
 
         handleVerticalCropHarvest(e, player);
-//        Bukkit.getLogger().info("BlockBreakEvent 9");
+        Bukkit.getLogger().info("BlockBreakEvent 9");
 
-        recordPickupObjective(loc, player);
-//        Bukkit.getLogger().info("BlockBreakEvent 10");
+        AutoAPI.tagCustomDropLocation(player, loc);
+        Bukkit.getLogger().info("BlockBreakEvent 10");
     }
 
     private boolean isInBlacklistedWorld(Location loc) {
@@ -70,7 +58,7 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handlePermissionsAsync(Player player) {
-//        Bukkit.getLogger().info("BlockBreakEvent Async 2");
+        Bukkit.getLogger().info("BlockBreakEvent Async 2");
 
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
             if (!PLUGIN.getConfigManager().isRequirePermsAUTO()) return;
@@ -84,9 +72,11 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handleXpAndMending(BlockBreakEvent e, Player player, Block block) {
+        Bukkit.getLogger().info("XP 1");
         if (!PLUGIN.getConfigManager().isUsingSilkSpawner() || block.getType() != Material.SPAWNER) {
             int xp = e.getExpToDrop();
             InventoryUtils.applyMending(player, xp);
+            Bukkit.getLogger().info("XP 2");
             e.setExpToDrop(0);
         }
     }
@@ -102,25 +92,6 @@ public class BlockBreakEventListener implements Listener {
         }
 
         return false;
-    }
-
-    private void handleContainerLoot(BlockState state, Player player, Location loc) {
-        Container container = (Container) state;
-        Inventory inventory = container.getInventory();
-
-        if (PLUGIN.getPluginHooks().isUsingWildChests() && loc.getBlock().getType() == Material.CHEST) {
-            recordPickupObjective(loc, player);
-            return;
-        }
-
-        for (ItemStack item : inventory.getContents()) {
-            if (item != null) {
-                HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(item);
-                leftOver.values().forEach(overflow -> player.getWorld().dropItemNaturally(loc, overflow));
-            }
-        }
-
-        inventory.clear();
     }
 
     private void handleVerticalCropHarvest(BlockBreakEvent e, Player player) {
@@ -162,7 +133,7 @@ public class BlockBreakEventListener implements Listener {
 
         connectedBlocks.forEach(loc -> {
             loc.getBlock().setType(Material.AIR);
-            recordPickupObjective(loc, player);
+            AutoAPI.tagCustomDropLocation(player, loc);
         });
     }
 
@@ -199,12 +170,6 @@ public class BlockBreakEventListener implements Listener {
         HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
         leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
 
-        recordPickupObjective(loc.add(0, 1, 0), player);
-    }
-
-    private void recordPickupObjective(Location loc, Player player) {
-        String key = loc.getBlockX() + ";" + loc.getBlockY() + ";" + loc.getBlockZ() + ";" + loc.getWorld();
-//        Bukkit.getLogger().info("Chiave: " + key);
-        AutoPickup.customItemPatch.put(key, new PickupObjective(loc, player, Instant.now()));
+        AutoAPI.tagCustomDropLocation(player, loc.add(0, 1, 0));
     }
 }

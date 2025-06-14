@@ -1,5 +1,7 @@
 package us.thezircon.play.autopickup.listeners;
 
+import com.bgsoftware.wildstacker.api.WildStackerAPI;
+import com.bgsoftware.wildstacker.api.objects.StackedItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Item;
@@ -36,13 +38,13 @@ public class ItemSpawnEventListener implements Listener {
     public void onSpawn(ItemSpawnEvent event) {
         Item itemEntity = event.getEntity();
         Location location = event.getLocation();
-        ItemStack itemStack = itemEntity.getItemStack();
-//        Bukkit.getLogger().info("Item " + itemEntity.getItemStack().getType() + " spawned at " +
-//                "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
+        StackedItem stackedItem = WildStackerAPI.getStackedItem(itemEntity);
+        Bukkit.getLogger().info("Item x" + stackedItem.getStackAmount() + " " + itemEntity.getItemStack().getType() + " spawned at " +
+                "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
 
         if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
         if (isIgnoredDrop(itemEntity)) return;
-        if (isBlacklistedItem(itemStack)) return;
+        if (isBlacklistedItem(stackedItem.getItemStack())) return;
 
         String key;
 
@@ -58,7 +60,7 @@ public class ItemSpawnEventListener implements Listener {
 
             if (AutoPickup.customItemPatch.containsKey(key)) {
 //                Bukkit.getLogger().info("ItemSpawnEvent: Found match at " + key);
-                handleCustomPickup(event, key);
+                handleCustomPickup(stackedItem, key);
                 return;
             }
         }
@@ -86,16 +88,19 @@ public class ItemSpawnEventListener implements Listener {
         return loc.getBlockX() + ";" + loc.getBlockY() + ";" + loc.getBlockZ() + ";" + loc.getWorld();
     }
 
-    private void handleCustomPickup(ItemSpawnEvent event, String key) {
+    private void handleCustomPickup(StackedItem stackedItem, String key) {
         PickupObjective objective = AutoPickup.customItemPatch.get(key);
         Player player = objective.getPlayer();
-        ItemStack item = event.getEntity().getItemStack();
 
-        HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(item);
+        stackedItem.giveItemStack(player.getInventory());
 
-        if (leftOver.isEmpty()) {
-            event.getEntity().remove();
-        }
+//        ItemStack item = event.getEntity().getItemStack();
+//
+//        HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(item);
+//
+//        if (leftOver.isEmpty()) {
+//            event.getEntity().remove();
+//        }
 
         // If you want to handle overflow or smelting in future, this is where you'd plug it in.
         // Example:

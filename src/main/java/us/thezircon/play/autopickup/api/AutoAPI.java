@@ -29,13 +29,12 @@ public class AutoAPI {
     }
 
     /**
-     * @param location The location that should be watched for possible custom drops.
      * @param player The player who broke said block.
-     * @deprecated Experimental API; This api has not been tested & officially supported / may be removed.
+     * @param location The location that should be watched for possible custom drops.
      *
      * Blocks broken by players are already tagged for custom drops; this should be used for adjacent blocks that should be watched for additional custom drops.
      */
-    public static void tagCustomDropLocation(Location location, Player player) {
+    public static void tagCustomDropLocation(Player player, Location location) {
         String key = location.getBlockX()+";"+location.getBlockY()+";"+location.getBlockZ()+";"+location.getWorld();
         AutoPickup.customItemPatch.put(key, new PickupObjective(location, player, Instant.now()));
     }
