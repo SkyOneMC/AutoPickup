@@ -36,9 +36,6 @@ public final class AutoPickup extends JavaPlugin {
     public boolean UP2Date = true;
 
     @Getter
-    private TallCrops crops;
-
-    @Getter
     private PluginHooks pluginHooks;
 
     // Custom Items Patch
@@ -83,7 +80,6 @@ public final class AutoPickup extends JavaPlugin {
         getCommand("autosmelt").setExecutor(new AutoSmelt());
 
         // Initialize Crops for versions
-        crops = new TallCrops();
 
         // Metrics bStats
         new Metrics(this, 5914);

@@ -6,11 +6,11 @@ import org.bukkit.entity.*;
 import org.bukkit.event.*;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.*;
-import org.bukkit.persistence.PersistentDataType;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.AltCropResolver;
+import us.thezircon.play.autopickup.utils.EnumVerticalItem;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
 import us.thezircon.play.autopickup.api.AutoAPI;
-import us.thezircon.play.autopickup.utils.TallCrops;
 
 import java.util.*;
 
@@ -81,95 +81,58 @@ public class BlockBreakEventListener implements Listener {
         }
     }
 
-    private boolean shouldSkipContainer(BlockState state) {
-        if (!(state instanceof Container)) return false;
-
-        if (state instanceof ShulkerBox) return true;
-
-        if (PLUGIN.getPluginHooks().isUsingUpgradableHoppers() && state instanceof Hopper hopper) {
-            NamespacedKey key = new NamespacedKey(PLUGIN.getServer().getPluginManager().getPlugin("UpgradeableHoppers"), "o");
-            return hopper.getPersistentDataContainer().has(key, PersistentDataType.STRING);
-        }
-
-        return false;
-    }
 
     private void handleVerticalCropHarvest(BlockBreakEvent e, Player player) {
         Material type = e.getBlock().getType();
         Location loc = e.getBlock().getLocation();
-        TallCrops crops = PLUGIN.getCrops();
 
-        if (crops.getVerticalReq().contains(type) || crops.getVerticalReqDown().contains(type)) {
+
+        if (EnumVerticalItem.RequiresVerticalSupport(type)) {
             e.setDropItems(false);
-            harvestVerticalChain(player, loc, type, crops);
+            harvestVerticalChain(player, loc, type);
         }
 
-        if (isMultiBlockPlant(type)) {
+        if (EnumVerticalItem.isMultiBlock(type)) {
             harvestConnectedVertical(player, loc, type);
         }
     }
 
-    private boolean isMultiBlockPlant(Material type) {
-        return switch (type) {
-            case BAMBOO, KELP, KELP_PLANT, CACTUS, SUGAR_CANE,
-                 WEEPING_VINES, WEEPING_VINES_PLANT, TWISTING_VINES,
-                 TWISTING_VINES_PLANT, CAVE_VINES, CAVE_VINES_PLANT,
-                 BIG_DRIPLEAF, BIG_DRIPLEAF_STEM -> true;
-            default -> false;
-        };
-    }
-
     private void harvestConnectedVertical(Player player, Location base, Material type) {
-        int direction = getGrowthDirection(type);
-        List<Location> connectedBlocks = new ArrayList<>();
+        int direction = EnumVerticalItem.getGrowthDirection(type);
 
         Location checkLoc = base.clone();
-        while (true) {
+        while (checkLoc.getBlock().getType() == type) {
             checkLoc.add(0, direction, 0);
-            if (checkLoc.getBlock().getType() == type) {
-                connectedBlocks.add(checkLoc.clone());
-            } else break;
-        }
-
-        connectedBlocks.forEach(loc -> {
+            Location loc = checkLoc.clone();
             loc.getBlock().setType(Material.AIR);
             AutoAPI.tagCustomDropLocation(player, loc);
-        });
-    }
 
-    private int getGrowthDirection(Material type) {
-        // Determine if it grows up or down
-        return switch (type) {
-            case BAMBOO, KELP, KELP_PLANT, CACTUS, SUGAR_CANE, TWISTING_VINES, TWISTING_VINES_PLANT, BIG_DRIPLEAF_STEM -> 1;
-            case WEEPING_VINES, WEEPING_VINES_PLANT, CAVE_VINES, CAVE_VINES_PLANT, BIG_DRIPLEAF -> -1;
-            default -> 0;
-        };
-    }
-
-    private void harvestVerticalChain(Player player, Location loc, Material type, TallCrops crops) {
-        int amt = 1;
-        Material dropType = TallCrops.checkAltType(type);
-
-        while (true) {
-            loc.add(0, 1, 0);
-            if (crops.getVerticalReq().contains(loc.getBlock().getType())) {
-                amt++;
-                loc.getBlock().setType(Material.AIR);
-            } else break;
         }
+    }
 
-        while (true) {
-            loc.subtract(0, 2, 0);
-            if (crops.getVerticalReqDown().contains(loc.getBlock().getType())) {
+
+    private void harvestVerticalChain(Player player, Location loc, Material type) {
+        int amt = 1;
+        Material dropType = AltCropResolver.resolve(type);
+        loc.add(0, 1, 0);
+
+        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
                 amt++;
                 loc.getBlock().setType(Material.AIR);
-            } else break;
+
+        }
+        loc.subtract(0, 2, 0);
+        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
+                amt++;
+                loc.getBlock().setType(Material.AIR);
+
         }
 
         ItemStack drop = new ItemStack(dropType, amt);
         HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
         leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
 
-        AutoAPI.tagCustomDropLocation(player, loc.add(0, 1, 0));
+        AutoAPI.tagCustomDropLocation(player, loc);
     }
+
 }
