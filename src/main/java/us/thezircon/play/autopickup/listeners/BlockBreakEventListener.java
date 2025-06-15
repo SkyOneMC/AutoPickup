@@ -86,53 +86,55 @@ public class BlockBreakEventListener implements Listener {
         Material type = e.getBlock().getType();
         Location loc = e.getBlock().getLocation();
 
-
-        if (EnumVerticalItem.RequiresVerticalSupport(type)) {
-            e.setDropItems(false);
-            harvestVerticalChain(player, loc, type);
-        }
-
         if (EnumVerticalItem.isMultiBlock(type)) {
+            e.setDropItems(false);
+//            harvestVerticalChain(player, loc, type);
             harvestConnectedVertical(player, loc, type);
         }
     }
 
     private void harvestConnectedVertical(Player player, Location base, Material type) {
-        int direction = EnumVerticalItem.getGrowthDirection(type);
-
-        Location checkLoc = base.clone();
-        while (checkLoc.getBlock().getType() == type) {
-            checkLoc.add(0, direction, 0);
-            Location loc = checkLoc.clone();
-            loc.getBlock().setType(Material.AIR);
-            AutoAPI.tagCustomDropLocation(player, loc);
-
-        }
-    }
-
-
-    private void harvestVerticalChain(Player player, Location loc, Material type) {
-        int amt = 1;
         Material dropType = AltCropResolver.resolve(type);
-        loc.add(0, 1, 0);
 
-        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
-                amt++;
-                loc.getBlock().setType(Material.AIR);
+        int direction = EnumVerticalItem.getGrowthDirection(dropType);
+        int amt = 1;
 
-        }
-        loc.subtract(0, 2, 0);
-        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
-                amt++;
-                loc.getBlock().setType(Material.AIR);
+        while (base.getBlock().getType() == dropType) {
+            base.add(0, direction, 0);
+            base.getBlock().setType(Material.AIR);
+            amt++;
 
         }
 
         ItemStack drop = new ItemStack(dropType, amt);
         HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
-        leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
 
-        AutoAPI.tagCustomDropLocation(player, loc);
+        if(!leftOver.isEmpty())
+        {
+            InventoryUtils.handleItemOverflow(player.getLocation(),player,true,leftOver,PLUGIN);
+        }
     }
 
+
+//    private void harvestVerticalChain(Player player, Location loc, Material type) {
+//        int direction = EnumVerticalItem.getGrowthDirection(type);
+//        loc.add(0, direction, 0);
+//
+//        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
+//
+//                loc.getBlock().setType(Material.AIR);
+//
+//        }
+//        loc.subtract(0, 2, 0);
+//        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
+//
+//                amt++;
+//                loc.getBlock().setType(Material.AIR);
+//
+//        }
+//
+//
+//
+//        AutoAPI.tagCustomDropLocation(player, loc);
+//    }
 }

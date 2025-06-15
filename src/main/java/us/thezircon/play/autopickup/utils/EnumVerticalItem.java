@@ -37,6 +37,7 @@ public enum EnumVerticalItem {
             return false;
         }
     }
+
     public static int getGrowthDirection(Material type) {
         EnumVerticalItem plantType = EnumVerticalItem.fromMaterial(type);
         return plantType != null ? plantType.getGrowthDirection() : 0;

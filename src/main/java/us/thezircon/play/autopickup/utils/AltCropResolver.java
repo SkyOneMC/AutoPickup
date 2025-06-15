@@ -1,12 +1,13 @@
 package us.thezircon.play.autopickup.utils;
 
+import com.google.common.collect.ImmutableMap;
 import org.bukkit.Material;
 
 import java.util.Map;
 
 public class AltCropResolver {
 
-    private static final Map<Material, Material> ALT_CROP_MAP = Map.ofEntries(
+    private static final Map<Material, Material> ALT_CROP_MAP = ImmutableMap.ofEntries(
             Map.entry(Material.KELP_PLANT, Material.KELP),
             Map.entry(Material.TWISTING_VINES_PLANT, Material.TWISTING_VINES),
             Map.entry(Material.WEEPING_VINES_PLANT, Material.WEEPING_VINES),
