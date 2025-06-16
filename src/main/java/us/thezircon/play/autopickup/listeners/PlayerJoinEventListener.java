@@ -48,7 +48,7 @@ public class PlayerJoinEventListener implements Listener {
     }
 
     private void enableAutoPickupModes(Player player) {
-        boolean doAutoEnableMSG = PLUGIN.getConfig().getBoolean("doAutoEnableMSG");
+        boolean doAutoEnableMSG = PLUGIN.getConfigManager().isDoAutoEnableMSG();
 
         if (player.hasPermission("autopickup.pickup.mined.autoenabled") &&
                 PLUGIN.autopickup_list.add(player) && doAutoEnableMSG) {
@@ -66,7 +66,7 @@ public class PlayerJoinEventListener implements Listener {
 
     private void reEnablePreviousState(Player player) {
         PickupPlayer pickupPlayer = new PickupPlayer(player);
-        boolean doReenableMsg = PLUGIN.getConfig().getBoolean("doEnabledOnJoinMSG");
+        boolean doReenableMsg = PLUGIN.getConfigManager().isDoAutoEnableMSG();
 
         if (pickupPlayer.getToggle() && player.hasPermission("autopickup.pickup.mined") &&
                 PLUGIN.autopickup_list.add(player) && doReenableMsg) {

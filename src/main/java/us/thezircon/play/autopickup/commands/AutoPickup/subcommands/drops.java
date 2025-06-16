@@ -30,7 +30,7 @@ public class drops extends CMDManager {
 
     @Override
     public void perform(CommandSender sender, String[] args) {
-        boolean requirePermsAUTO = PLUGIN.getConfig().getBoolean("requirePerms.autopickup");
+        boolean requirePermsAUTO = PLUGIN.getConfigManager().isRequirePermsAUTO();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

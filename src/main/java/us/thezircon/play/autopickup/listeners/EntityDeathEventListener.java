@@ -33,7 +33,7 @@ public class EntityDeathEventListener implements Listener {
 
     private void checkPermissionsAsync(Player player) {
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
-            if (!PLUGIN.getConfig().getBoolean("requirePerms.autopickup")) return;
+            if (!PLUGIN.getConfigManager().isRequirePermsAUTO()) return;
 
             boolean hasPermission = player.hasPermission("autopickup.pickup.entities")
                     || player.hasPermission("autopickup.pickup.entities.autoenabled");
