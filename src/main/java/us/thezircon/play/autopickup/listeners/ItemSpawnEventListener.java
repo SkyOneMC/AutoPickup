@@ -46,14 +46,11 @@ public class ItemSpawnEventListener implements Listener {
         if (isBlacklistedItem(stackedItem.getItemStack())) return;
 
         String key;
-
         String world = location.getWorld().toString();
+        int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
 
         for (int[] offset : offsets) {
-            int x = location.getBlockX() + offset[0];
-            int y = location.getBlockY() + offset[1];
-            int z = location.getBlockZ() + offset[2];
-            key = x + ";" + y + ";" + z + ";" + world;
+            key = (x + offset[0]) + ";" + (y + offset[1]) + ";" + (z + offset[2]) + ";" + world;
 
 //            PLUGIN.debugMsg("Checking key: " + key);
 
@@ -81,10 +78,6 @@ public class ItemSpawnEventListener implements Listener {
         if (!PLUGIN.getConfigManager().isDoBlacklisted()) return false;
 
         return PLUGIN.getConfigManager().getBlacklistedItems().contains(itemStack.getType().toString());
-    }
-
-    private String generateLocationKey(Location loc) {
-        return loc.getBlockX() + ";" + loc.getBlockY() + ";" + loc.getBlockZ() + ";" + loc.getWorld();
     }
 
     private void handleCustomPickup(StackedItem stackedItem, String key) {
