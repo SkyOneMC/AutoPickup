@@ -6,16 +6,16 @@ authors: [BUTTERFIELD8]
 description: Automatically pickup broken blocks.
 website: https://discord.gg/ncHH4FP
 api-version: 1.21
-softdepend: [SuperiorSkyblock2, WildChests, WildStacker, LockettePro, UpgradeableHoppers, PlaceholderAPI, Jobs, MythicMobs]
+softdepend: [WildStacker, PlaceholderAPI, MythicMobs]
 commands:
   autopickup:
-    description: Toggles the ability to automaticly pickup blocks when you mine them.
+    description: Toggles the ability to automatically pickup blocks when you mine them.
     aliases: [auto, pickup]
   autodrops:
-    description: Toggles the ability to automaticly pickup drops from killed entities.
+    description: Toggles the ability to automatically pickup drops from killed entities.
     aliases: [drops, autod]
   autosmelt:
-    description: Toggles the ability to automaticly smelt mined blocks.
+    description: Toggles the ability to automatically smelt mined blocks.
     aliases: [asmelt]
 permissions:
   autopickup.pickup.mined.autoenabled:
