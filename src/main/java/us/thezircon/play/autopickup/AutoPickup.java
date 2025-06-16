@@ -39,14 +39,14 @@ public final class AutoPickup extends JavaPlugin {
     private PluginHooks pluginHooks;
 
     // Custom Items Patch
-    public static Map<String, PickupObjective> customItemPatch = new ConcurrentHashMap<>();
-    public static Set<UUID> droppedItems = ConcurrentHashMap.newKeySet();
+    public static Map<String, PickupObjective> customItemPatch = new HashMap<>();
+    public static Set<UUID> droppedItems = new HashSet<>();
 
     // Cache smelting recipe list
-    public static final Map<Material, FurnaceRecipe> smeltRecipeCache = new ConcurrentHashMap<>();
+    public static final Map<Material, FurnaceRecipe> smeltRecipeCache = new HashMap<>();
 
     // Notification Cooldown
-    public static Map<UUID, Long> lastInvFullNotification = new ConcurrentHashMap<>();
+    public static Map<UUID, Long> lastInvFullNotification = new HashMap<>();
 
     @Getter
     private static AutoPickup instance;
