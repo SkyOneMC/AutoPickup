@@ -32,8 +32,7 @@ public class drops extends CMDManager {
     public void perform(CommandSender sender, String[] args) {
         boolean requirePermsAUTO = PLUGIN.getConfigManager().isRequirePermsAUTO();
 
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
+        if (sender instanceof Player player) {
             if (player.hasPermission("autopickup.pickup.entities") || !requirePermsAUTO) {
                 AutoDrops.toggle(player);
             } else {

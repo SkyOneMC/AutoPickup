@@ -1,6 +1,9 @@
 package us.thezircon.play.autopickup.utils;
 
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,6 +18,8 @@ import java.util.Set;
 public class ConfigManager {
 
     private static final AutoPickup PLUGIN = AutoPickup.getInstance();
+    private static final MiniMessage MINIMESSAGE = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     // Main config.yml values
     private boolean debug;
@@ -86,8 +91,11 @@ public class ConfigManager {
         filePAPI = ensureFileExists("papi.yml");
         papiConf = YamlConfiguration.loadConfiguration(filePAPI);
 
-        this.papiEnabledTrue = papiConf.getString("papi.enabled.true", "<green>✔</green>");
-        this.papiEnabledFalse = papiConf.getString("papi.enabled.false", "<red>✘</red>");
+        Component componentTrue = MINIMESSAGE.deserialize(papiConf.getString("papi.enabled.true", "<green>✔</green>"));
+        Component componentFalse = MINIMESSAGE.deserialize(papiConf.getString("papi.enabled.false", "<red>✘</red>"));
+
+        this.papiEnabledTrue = LEGACY.serialize(componentTrue);
+        this.papiEnabledFalse = LEGACY.serialize(componentFalse);
     }
 
     // === blacklist.yml ===

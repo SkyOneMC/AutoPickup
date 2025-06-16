@@ -1,8 +1,6 @@
 package us.thezircon.play.autopickup.papi;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
@@ -11,18 +9,6 @@ import us.thezircon.play.autopickup.utils.PickupPlayer;
 public class AutoPickupExpansion extends PlaceholderExpansion {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
-    private final MiniMessage miniMessage = MiniMessage.miniMessage();
-
-    private final Component trueComponent;
-    private final Component falseComponent;
-
-    public AutoPickupExpansion() {
-        String rawTrue = PLUGIN.getConfigManager().getPapiEnabledTrue();
-        String rawFalse =  PLUGIN.getConfigManager().getPapiEnabledFalse();
-
-        this.trueComponent = miniMessage.deserialize(rawTrue);
-        this.falseComponent = miniMessage.deserialize(rawFalse);
-    }
 
     @Override
     public boolean canRegister() {
@@ -50,17 +36,20 @@ public class AutoPickupExpansion extends PlaceholderExpansion {
             return null;
         }
 
+        String trueString = PLUGIN.getConfigManager().getPapiEnabledTrue();
+        String falseString =  PLUGIN.getConfigManager().getPapiEnabledFalse();
+
         PickupPlayer pickupPlayer = new PickupPlayer(player);
 
         switch (identifier) {
             case "autoenabled" -> {
-                return miniMessage.serialize(pickupPlayer.getToggle() ? trueComponent : falseComponent);
+                return pickupPlayer.getToggle() ? trueString : falseString;
             }
             case "dropsenabled" -> {
-                return miniMessage.serialize(pickupPlayer.getMobDropsToggle() ? trueComponent : falseComponent);
+                return pickupPlayer.getMobDropsToggle() ? trueString : falseString;
             }
             case "autosmeltenabled" -> {
-                return miniMessage.serialize(pickupPlayer.getAutoSmeltToggle() ? trueComponent : falseComponent);
+                return pickupPlayer.getAutoSmeltToggle() ? trueString : falseString;
             }
             default -> {
                 return null;
