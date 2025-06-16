@@ -39,7 +39,7 @@ public final class AutoPickup extends JavaPlugin {
     private PluginHooks pluginHooks;
 
     // Custom Items Patch
-    public static Map<String, PickupObjective> customItemPatch = new HashMap<>();
+    public static Map<String, PickupObjective> customItemPatch = new ConcurrentHashMap<>();
     public static Set<UUID> droppedItems = new HashSet<>();
 
     // Cache smelting recipe list
@@ -85,16 +85,7 @@ public final class AutoPickup extends JavaPlugin {
         new Metrics(this, 5914);
 
         // Version check async
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                try {
-                    VersionChk.checkVersionAsync(getName(), 70157);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.runTaskAsynchronously(this);
+        VersionChk.checkVersionAsync(getName(), 70157);
 
         // Cleanup tasks
         scheduleCleanupTasks();
