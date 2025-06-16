@@ -79,8 +79,6 @@ public final class AutoPickup extends JavaPlugin {
         getCommand("autodrops").setExecutor(new AutoDrops());
         getCommand("autosmelt").setExecutor(new AutoSmelt());
 
-        // Initialize Crops for versions
-
         // Metrics bStats
         new Metrics(this, 5914);
 
@@ -98,10 +96,9 @@ public final class AutoPickup extends JavaPlugin {
     public void onDisable() {
         HandlerList.unregisterAll(this);
 
-        // Cancel any ongoing tasks that could be running asynchronously
+        // Cancel any ongoing tasks
         Bukkit.getScheduler().cancelTasks(this);
 
-        // Optionally, you can notify the server or log an event indicating the plugin is disabled.
         getLogger().info(getName() + " has been disabled.");
     }
 

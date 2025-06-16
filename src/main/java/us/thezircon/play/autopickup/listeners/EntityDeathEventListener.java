@@ -8,12 +8,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
-
-import java.util.HashMap;
-import java.util.Iterator;
 
 public class EntityDeathEventListener implements Listener {
 
@@ -50,27 +46,16 @@ public class EntityDeathEventListener implements Listener {
 
     private void handleDrops(EntityDeathEvent event, Player player) {
         Location loc = player.getLocation();
-        boolean doFullInvMSG = PLUGIN.getConfig().getBoolean("doFullInvMSG");
 
-        Iterator<ItemStack> iterator = event.getDrops().iterator();
-
-        while (iterator.hasNext()) {
-            ItemStack drop = iterator.next();
-            HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
-            iterator.remove();
-
-            if (!leftOver.isEmpty()) {
-                InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver);
-            }
-        }
-
-        event.getDrops().clear();
+        InventoryUtils.handleDropsGive(player, loc, event.getDrops(), true);
     }
 
     private void handleXp(EntityDeathEvent event, Player player) {
-        if (PLUGIN.getConfig().getBoolean("ignoreMobXPDrops")) return;
+        if (PLUGIN.getConfigManager().isIgnoreMobXPDrops()) return;
 
         int xp = event.getDroppedExp();
+        if (xp <= 0) return;
+
         InventoryUtils.applyMending(player, xp);
         event.setDroppedExp(0);
     }

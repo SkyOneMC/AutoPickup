@@ -18,10 +18,8 @@ public class PlayerInteractEventListener implements Listener {
     public void onInteract(PlayerInteractEvent event) {
         Action action = event.getAction();
 
-        // Only handle block interactions
-        if (action != Action.RIGHT_CLICK_BLOCK) {
-            return;
-        }
+        // Only handle right click block interactions
+        if (action != Action.RIGHT_CLICK_BLOCK) return;
 
         Player player = event.getPlayer();
 

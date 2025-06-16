@@ -68,8 +68,10 @@ public class BlockBreakEventListener implements Listener {
         PLUGIN.debugMsg("XP 1");
         if (!PLUGIN.getConfigManager().isUsingSilkSpawner() || block.getType() != Material.SPAWNER) {
             int xp = e.getExpToDrop();
+            if (xp <= 0) return;
+
             InventoryUtils.applyMending(player, xp);
-            PLUGIN.debugMsg("XP 2");
+            PLUGIN.debugMsg("XP 2: " + xp);
             e.setExpToDrop(0);
         }
     }

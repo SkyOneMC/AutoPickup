@@ -5,12 +5,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
-
-import java.util.HashMap;
-import java.util.Iterator;
 
 public class MythicMobListener implements Listener {
 
@@ -25,18 +21,7 @@ public class MythicMobListener implements Listener {
         if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
         if (isMobBlacklisted(event)) return;
 
-        boolean showFullInvMsg = PLUGIN.getConfigManager().isDoFullInvMsg();
-
-        Iterator<ItemStack> iterator = event.getDrops().iterator();
-        while (iterator.hasNext()) {
-            ItemStack drop = iterator.next();
-            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
-            iterator.remove();
-
-            if (!leftover.isEmpty()) {
-                InventoryUtils.handleItemOverflow(location, player, showFullInvMsg, leftover);
-            }
-        }
+        InventoryUtils.handleDropsGive(player, location, event.getDrops(), true);
     }
 
     private boolean isMobBlacklisted(MythicMobDeathEvent event) {

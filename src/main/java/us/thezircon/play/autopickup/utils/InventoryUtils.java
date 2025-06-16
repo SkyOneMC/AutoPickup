@@ -1,5 +1,8 @@
 package us.thezircon.play.autopickup.utils;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
+import net.kyori.adventure.util.Ticks;
 import org.bukkit.Location;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -9,26 +12,52 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import us.thezircon.play.autopickup.AutoPickup;
 
+import java.time.Duration;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 
 public class InventoryUtils {
     private static final long COOLDOWN_MILLIS = 15_000L; // 15 seconds
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    public static void handleItemOverflow(Location loc, Player player, boolean doFullInvMSG, HashMap<Integer, ItemStack> leftOver) {
-        // Drop leftover items at location
-        leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
+    public static void handleDropsGive(Player player, Location location, List<ItemStack> drops, boolean isSmelt) {
+        Iterator<ItemStack> iterator = drops.iterator();
+        while (iterator.hasNext()) {
+            ItemStack drop = iterator.next();
 
-        if (!doFullInvMSG) return;
+            if (!handleDropGive(player, location, drop, isSmelt)) continue;
 
-        long lastNotification = AutoPickup.lastInvFullNotification.getOrDefault(player.getUniqueId(), 0L);
-        long timeSinceLast = System.currentTimeMillis() - lastNotification;
-
-        if (timeSinceLast >= COOLDOWN_MILLIS) {
-            // Using Adventure Component here could be an improvement if plugin.getMsg() supports it.
-            PLUGIN.getMsg().send(player, Lang.FULL_INVENTORY);
-            AutoPickup.lastInvFullNotification.put(player.getUniqueId(), System.currentTimeMillis());
+            iterator.remove();
         }
+    }
+
+    public static boolean handleDropGive(Player player, Location location, ItemStack drop, boolean isSmelt) {
+        if (PLUGIN.getConfigManager().isDoBlacklisted()
+                && PLUGIN.getConfigManager().getBlacklistedItems().contains(drop.getType().toString())) {
+            return false;
+        }
+
+        if (isSmelt && PLUGIN.auto_smelt_blocks.contains(player)) {
+            drop = AutoSmeltUtils.smelt(drop, player);
+        }
+
+        HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
+
+        if (!leftover.isEmpty()) {
+            handleItemOverflow(player, location, leftover);
+        }
+        return true;
+    }
+
+    public static void handleItemOverflow(Player player, Location loc, HashMap<Integer, ItemStack> leftOver) {
+        sendInventoryFullMessage(player);
+        sendInventoryFullTitle(player);
+
+        if (PLUGIN.getConfigManager().isVoidOnFullInv()) return;
+
+        leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
     }
 
     private static boolean isMendable(ItemStack item) {
@@ -80,6 +109,36 @@ public class InventoryUtils {
 
         for (ItemStack armorPiece : player.getInventory().getArmorContents()) {
             mend(armorPiece, xp);
+        }
+    }
+
+    private static void sendInventoryFullTitle(Player player) {
+        if (!PLUGIN.getConfigManager().isTitleBar()) return;
+
+        Component title1 = PLUGIN.getMsg().get(Lang.TITLE_LINE_1);
+        Component title2 = PLUGIN.getMsg().get(Lang.TITLE_LINE_2);
+
+        Duration fadeIn = Ticks.duration(1);
+        Duration stay = Ticks.duration(20);
+        Duration fadeOut = Ticks.duration(1);
+
+        Title.Times times = Title.Times.times(fadeIn, stay, fadeOut);
+
+        Title title = Title.title(title1, title2, times);
+
+        player.showTitle(title);
+    }
+
+    private static void sendInventoryFullMessage(Player player) {
+        if (!PLUGIN.getConfigManager().isDoFullInvMsg()) return;
+
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
+
+        long lastSent = AutoPickup.lastInvFullNotification.getOrDefault(uuid, 0L);
+        if ((now - lastSent) >= COOLDOWN_MILLIS) {
+            PLUGIN.getMsg().send(player, Lang.FULL_INVENTORY);
+            AutoPickup.lastInvFullNotification.put(uuid, now);
         }
     }
 }

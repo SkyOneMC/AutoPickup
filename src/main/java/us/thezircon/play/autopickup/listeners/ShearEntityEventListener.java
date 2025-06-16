@@ -1,16 +1,13 @@
 package us.thezircon.play.autopickup.listeners;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerShearEntityEvent;
-import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
-
-import java.util.HashMap;
-import java.util.Iterator;
 
 public class ShearEntityEventListener implements Listener {
 
@@ -21,26 +18,11 @@ public class ShearEntityEventListener implements Listener {
         Player player = event.getPlayer();
 
         if (!PLUGIN.autopickup_list.contains(player)) return;
-        if (PLUGIN.getConfigManager().isWorldBlacklisted(event.getEntity().getLocation())) return;
+        Location location = event.getEntity().getLocation();
+        if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
 
-        handleDrops(event, player);
+        InventoryUtils.handleDropsGive(player, location, event.getDrops(), true);
         validatePermissionsAsync(player);
-    }
-
-    private void handleDrops(PlayerShearEntityEvent event, Player player) {
-        boolean notifyFullInventory = PLUGIN.getConfig().getBoolean("doFullInvMSG");
-
-        Iterator<ItemStack> iterator = event.getDrops().iterator();
-
-        while (iterator.hasNext()) {
-            ItemStack drop = iterator.next();
-            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(drop);
-            iterator.remove();
-
-            if (!leftover.isEmpty()) {
-                InventoryUtils.handleItemOverflow(player.getLocation(), player, notifyFullInventory, leftover);
-            }
-        }
     }
 
     private void validatePermissionsAsync(Player player) {

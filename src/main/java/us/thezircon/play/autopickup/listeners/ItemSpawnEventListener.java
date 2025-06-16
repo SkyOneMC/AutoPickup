@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.InventoryUtils;
 import us.thezircon.play.autopickup.utils.PickupObjective;
 
 import java.util.*;
@@ -37,8 +38,18 @@ public class ItemSpawnEventListener implements Listener {
     public void onSpawn(ItemSpawnEvent event) {
         Item itemEntity = event.getEntity();
         Location location = event.getLocation();
+
+        if (PLUGIN.getPluginHooks().isUsingWildStacker()) {
+            handleStackedSpawn(itemEntity, location);
+        } else {
+            handleVanillaSpawn(itemEntity, location);
+        }
+    }
+
+    private void handleStackedSpawn(Item itemEntity, Location location) {
         StackedItem stackedItem = WildStackerAPI.getStackedItem(itemEntity);
-        PLUGIN.debugMsg("Item x" + stackedItem.getStackAmount() + " " + itemEntity.getItemStack().getType() + " spawned at " +
+
+        PLUGIN.debugMsg("Item x" + stackedItem.getStackAmount() + " " + stackedItem.getItemStack().getType() + " spawned at " +
                 "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
 
         if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
@@ -52,16 +63,39 @@ public class ItemSpawnEventListener implements Listener {
         for (int[] offset : offsets) {
             key = (x + offset[0]) + ";" + (y + offset[1]) + ";" + (z + offset[2]) + ";" + world;
 
-//            PLUGIN.debugMsg("Checking key: " + key);
-
             if (AutoPickup.customItemPatch.containsKey(key)) {
-//                PLUGIN.debugMsg("ItemSpawnEvent: Found match at " + key);
-                handleCustomPickup(stackedItem, key);
+                PLUGIN.debugMsg("ItemSpawnEvent: Found match at " + key);
+                stackedItem.giveItemStack(getAssociatedPlayer(key).getInventory());
                 return;
             }
         }
-
     }
+
+    private void handleVanillaSpawn(Item itemEntity, Location location) {
+        ItemStack itemStack = itemEntity.getItemStack();
+
+        PLUGIN.debugMsg("Item x" + itemStack.getAmount() + " " + itemStack.getType() + " spawned at " +
+                "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
+
+        if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
+        if (isIgnoredDrop(itemEntity)) return;
+        if (isBlacklistedItem(itemStack)) return;
+
+        String key;
+        String world = location.getWorld().toString();
+        int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
+
+        for (int[] offset : offsets) {
+            key = (x + offset[0]) + ";" + (y + offset[1]) + ";" + (z + offset[2]) + ";" + world;
+
+            if (AutoPickup.customItemPatch.containsKey(key)) {
+                PLUGIN.debugMsg("ItemSpawnEvent: Found match at " + key);
+                InventoryUtils.handleDropGive(getAssociatedPlayer(key), location, itemStack, false);
+                return;
+            }
+        }
+    }
+
 
     private boolean isIgnoredDrop(Item item) {
         UUID uuid = item.getUniqueId();
@@ -80,24 +114,9 @@ public class ItemSpawnEventListener implements Listener {
         return PLUGIN.getConfigManager().getBlacklistedItems().contains(itemStack.getType().toString());
     }
 
-    private void handleCustomPickup(StackedItem stackedItem, String key) {
+    private Player getAssociatedPlayer(String key) {
         PickupObjective objective = AutoPickup.customItemPatch.get(key);
-        Player player = objective.getPlayer();
 
-        stackedItem.giveItemStack(player.getInventory());
-
-//        ItemStack item = event.getEntity().getItemStack();
-//
-//        HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(item);
-//
-//        if (leftOver.isEmpty()) {
-//            event.getEntity().remove();
-//        }
-
-        // If you want to handle overflow or smelting in future, this is where you'd plug it in.
-        // Example:
-        // if (PLUGIN.auto_smelt_blocks.contains(player)) {
-        //     item = AutoSmeltUtils.smelt(item, player);
-        // }
+        return objective.getPlayer();
     }
 }
