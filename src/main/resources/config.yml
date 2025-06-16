@@ -13,6 +13,9 @@ ConfigVersion: 1.4
 # Discord: https://discord.gg/ncHH4FP                                                                       #
 #############################################################################################################
 
+# Enable debug messages
+debug: false
+
 #Message Prefix
 msgPrefix: "<gray>[<gradient:#AA00FF:#FF55FF>Auto<italic>Pickup</italic></gradient><gray>]"
 

@@ -132,12 +132,12 @@ public final class AutoPickup extends JavaPlugin {
     }
 
     private void scheduleCleanupTasks() {
-        // Pickup Objective Cleaner - runs every 15 seconds asynchronously
+        // Pickup Objective Cleaner - runs every .5 seconds asynchronously
         new BukkitRunnable() {
             @Override
             public void run() {
                 customItemPatch.keySet().removeIf(key ->
-                        Duration.between(Instant.now(), customItemPatch.get(key).getCreatedAt()).getSeconds() < -15);
+                        Duration.between(Instant.now(), customItemPatch.get(key).getCreatedAt()).getSeconds() < -5);
             }
         }.runTaskTimerAsynchronously(this, 10L, 10L);
 
@@ -160,6 +160,12 @@ public final class AutoPickup extends JavaPlugin {
         File dir = new File(getDataFolder(), "PlayerData");
         if (!dir.exists()) {
             dir.mkdirs();
+        }
+    }
+
+    public void debugMsg(String msg) {
+        if (this.configManager.isDebug()) {
+            this.getLogger().info(msg);
         }
     }
 }

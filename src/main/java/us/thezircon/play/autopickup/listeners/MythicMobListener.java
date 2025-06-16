@@ -34,7 +34,7 @@ public class MythicMobListener implements Listener {
             iterator.remove();
 
             if (!leftover.isEmpty()) {
-                InventoryUtils.handleItemOverflow(location, player, showFullInvMsg, leftover, PLUGIN);
+                InventoryUtils.handleItemOverflow(location, player, showFullInvMsg, leftover);
             }
         }
     }

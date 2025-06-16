@@ -29,14 +29,14 @@ public class BlockDropItemEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDrop(BlockDropItemEvent event) {
         if (event.isCancelled()) {
-            Bukkit.getLogger().info("BlockDropItemEvent - Cancelled");
+            PLUGIN.debugMsg("BlockDropItemEvent - Cancelled");
             return;
         }
         Player player = event.getPlayer();
-        Bukkit.getLogger().info("BlockDropItemEvent 1");
+        PLUGIN.debugMsg("BlockDropItemEvent 1");
         if (!PLUGIN.autopickup_list.contains(player)) return;
 
-        Bukkit.getLogger().info("BlockDropItemEvent 2");
+        PLUGIN.debugMsg("BlockDropItemEvent 2");
 
         Block block = event.getBlock();
         Location location = block.getLocation();
@@ -51,7 +51,7 @@ public class BlockDropItemEventListener implements Listener {
 
             ItemStack drop = itemEntity.getItemStack();
 
-            Bukkit.getLogger().info("BlockDropItemEvent " + drop);
+            PLUGIN.debugMsg("BlockDropItemEvent " + drop);
 
             if (useBlacklist && PLUGIN.getConfigManager().getBlacklistedItems().contains(drop.getType().toString())) {
                 continue;

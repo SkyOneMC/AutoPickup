@@ -15,7 +15,7 @@ public class InventoryUtils {
     private static final long COOLDOWN_MILLIS = 15_000L; // 15 seconds
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    public static void handleItemOverflow(Location loc, Player player, boolean doFullInvMSG, HashMap<Integer, ItemStack> leftOver, AutoPickup plugin) {
+    public static void handleItemOverflow(Location loc, Player player, boolean doFullInvMSG, HashMap<Integer, ItemStack> leftOver) {
         // Drop leftover items at location
         leftOver.values().forEach(item -> player.getWorld().dropItemNaturally(loc, item));
 

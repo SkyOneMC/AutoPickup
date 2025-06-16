@@ -38,7 +38,7 @@ public class ShearEntityEventListener implements Listener {
             iterator.remove();
 
             if (!leftover.isEmpty()) {
-                InventoryUtils.handleItemOverflow(player.getLocation(), player, notifyFullInventory, leftover, PLUGIN);
+                InventoryUtils.handleItemOverflow(player.getLocation(), player, notifyFullInventory, leftover);
             }
         }
     }

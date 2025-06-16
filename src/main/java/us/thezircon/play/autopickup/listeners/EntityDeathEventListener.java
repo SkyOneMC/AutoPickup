@@ -60,7 +60,7 @@ public class EntityDeathEventListener implements Listener {
             iterator.remove();
 
             if (!leftOver.isEmpty()) {
-                InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver, PLUGIN);
+                InventoryUtils.handleItemOverflow(loc, player, doFullInvMSG, leftOver);
             }
         }
 

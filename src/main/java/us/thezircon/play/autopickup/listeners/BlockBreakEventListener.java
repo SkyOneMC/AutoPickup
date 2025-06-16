@@ -5,14 +5,10 @@ import org.bukkit.block.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.*;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.inventory.*;
 import us.thezircon.play.autopickup.AutoPickup;
-import us.thezircon.play.autopickup.utils.AltCropResolver;
 import us.thezircon.play.autopickup.utils.EnumVerticalItem;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
 import us.thezircon.play.autopickup.api.AutoAPI;
-
-import java.util.*;
 
 public class BlockBreakEventListener implements Listener {
 
@@ -22,34 +18,31 @@ public class BlockBreakEventListener implements Listener {
     public void onBreak(BlockBreakEvent e) {
 
         if (e.isCancelled()) {
-            Bukkit.getLogger().warning("BlockBreakEvent cancelled");
+            PLUGIN.debugMsg("BlockBreakEvent cancelled");
             return;
         }
-        Bukkit.getLogger().info("BlockBreakEvent");
+        PLUGIN.debugMsg("BlockBreakEvent");
         Player player = e.getPlayer();
         Block block = e.getBlock();
         Location loc = block.getLocation();
 
-        if (!PLUGIN.autopickup_list.contains(player) || isInBlacklistedWorld(loc) || isBlacklistedBlock(block)) {
+        if (!PLUGIN.autopickup_list.contains(player)
+                || PLUGIN.getConfigManager().isWorldBlacklisted(loc) || isBlacklistedBlock(block)) {
             return;
         }
-        Bukkit.getLogger().info("BlockBreakEvent 1");
+        PLUGIN.debugMsg("BlockBreakEvent 1");
 
         handlePermissionsAsync(player);
-        Bukkit.getLogger().info("BlockBreakEvent 3");
+        PLUGIN.debugMsg("BlockBreakEvent 3");
 
         handleXpAndMending(e, player, block);
-        Bukkit.getLogger().info("BlockBreakEvent 8");
+        PLUGIN.debugMsg("BlockBreakEvent 4: " + e.getBlock().getType());
 
-        handleVerticalCropHarvest(e, player);
-        Bukkit.getLogger().info("BlockBreakEvent 9");
+        handleVerticalCropHarvest(block, player);
+        PLUGIN.debugMsg("BlockBreakEvent 9");
 
         AutoAPI.tagCustomDropLocation(player, loc);
-        Bukkit.getLogger().info("BlockBreakEvent 10");
-    }
-
-    private boolean isInBlacklistedWorld(Location loc) {
-        return PLUGIN.getConfigManager().getBlacklistedWorlds().contains(loc.getWorld().getName());
+        PLUGIN.debugMsg("BlockBreakEvent 10");
     }
 
     private boolean isBlacklistedBlock(Block block) {
@@ -58,7 +51,7 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handlePermissionsAsync(Player player) {
-        Bukkit.getLogger().info("BlockBreakEvent Async 2");
+        PLUGIN.debugMsg("BlockBreakEvent Async 2");
 
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
             if (!PLUGIN.getConfigManager().isRequirePermsAUTO()) return;
@@ -72,69 +65,32 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handleXpAndMending(BlockBreakEvent e, Player player, Block block) {
-        Bukkit.getLogger().info("XP 1");
+        PLUGIN.debugMsg("XP 1");
         if (!PLUGIN.getConfigManager().isUsingSilkSpawner() || block.getType() != Material.SPAWNER) {
             int xp = e.getExpToDrop();
             InventoryUtils.applyMending(player, xp);
-            Bukkit.getLogger().info("XP 2");
+            PLUGIN.debugMsg("XP 2");
             e.setExpToDrop(0);
         }
     }
 
-
-    private void handleVerticalCropHarvest(BlockBreakEvent e, Player player) {
-        Material type = e.getBlock().getType();
-        Location loc = e.getBlock().getLocation();
+    private void handleVerticalCropHarvest(Block block, Player player) {
+        Material type = block.getType();
 
         if (EnumVerticalItem.isMultiBlock(type)) {
-            e.setDropItems(false);
-//            harvestVerticalChain(player, loc, type);
-            harvestConnectedVertical(player, loc, type);
+            harvestConnectedVertical(player, block.getLocation(), type);
         }
     }
 
+    // TODO: BIG_DRIPLEAF break both ways
     private void harvestConnectedVertical(Player player, Location base, Material type) {
-        Material dropType = AltCropResolver.resolve(type);
+        int direction = EnumVerticalItem.getGrowthDirection(type);
 
-        int direction = EnumVerticalItem.getGrowthDirection(dropType);
-        int amt = 1;
-
-        while (base.getBlock().getType() == dropType) {
-            base.add(0, direction, 0);
-            base.getBlock().setType(Material.AIR);
-            amt++;
-
-        }
-
-        ItemStack drop = new ItemStack(dropType, amt);
-        HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(drop);
-
-        if(!leftOver.isEmpty())
-        {
-            InventoryUtils.handleItemOverflow(player.getLocation(),player,true,leftOver,PLUGIN);
+        Location loc = base.clone();
+        while (loc.getBlock().getType() == type) {
+            PLUGIN.debugMsg(loc.getBlock().getType().toString());
+            AutoAPI.tagCustomDropLocation(player, loc);
+            loc.add(0, direction, 0);
         }
     }
-
-
-//    private void harvestVerticalChain(Player player, Location loc, Material type) {
-//        int direction = EnumVerticalItem.getGrowthDirection(type);
-//        loc.add(0, direction, 0);
-//
-//        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
-//
-//                loc.getBlock().setType(Material.AIR);
-//
-//        }
-//        loc.subtract(0, 2, 0);
-//        while (EnumVerticalItem.RequiresVerticalSupport(loc.getBlock().getType())) {
-//
-//                amt++;
-//                loc.getBlock().setType(Material.AIR);
-//
-//        }
-//
-//
-//
-//        AutoAPI.tagCustomDropLocation(player, loc);
-//    }
 }

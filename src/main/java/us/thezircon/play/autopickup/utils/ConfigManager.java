@@ -17,6 +17,7 @@ public class ConfigManager {
     private static final AutoPickup PLUGIN = AutoPickup.getInstance();
 
     // Main config.yml values
+    private boolean debug;
     private boolean doAutoEnableMSG;
     private boolean requirePermsAUTO;
     private boolean requirePermsRELOAD;
@@ -67,6 +68,7 @@ public class ConfigManager {
         PLUGIN.reloadConfig();
         FileConfiguration config = PLUGIN.getConfig();
 
+        this.debug = config.getBoolean("debug", false);
         this.doAutoEnableMSG = config.getBoolean("doAutoEnableMSG", true);
         this.requirePermsAUTO = config.getBoolean("requirePerms.autopickup", true);
         this.requirePermsRELOAD = config.getBoolean("requirePerms.auto-reload", true);

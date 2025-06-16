@@ -2,7 +2,6 @@ package us.thezircon.play.autopickup.listeners;
 
 import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import com.bgsoftware.wildstacker.api.objects.StackedItem;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -39,7 +38,7 @@ public class ItemSpawnEventListener implements Listener {
         Item itemEntity = event.getEntity();
         Location location = event.getLocation();
         StackedItem stackedItem = WildStackerAPI.getStackedItem(itemEntity);
-        Bukkit.getLogger().info("Item x" + stackedItem.getStackAmount() + " " + itemEntity.getItemStack().getType() + " spawned at " +
+        PLUGIN.debugMsg("Item x" + stackedItem.getStackAmount() + " " + itemEntity.getItemStack().getType() + " spawned at " +
                 "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
 
         if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
@@ -56,10 +55,10 @@ public class ItemSpawnEventListener implements Listener {
             int z = location.getBlockZ() + offset[2];
             key = x + ";" + y + ";" + z + ";" + world;
 
-//            Bukkit.getLogger().info("Checking key: " + key);
+//            PLUGIN.debugMsg("Checking key: " + key);
 
             if (AutoPickup.customItemPatch.containsKey(key)) {
-//                Bukkit.getLogger().info("ItemSpawnEvent: Found match at " + key);
+//                PLUGIN.debugMsg("ItemSpawnEvent: Found match at " + key);
                 handleCustomPickup(stackedItem, key);
                 return;
             }
