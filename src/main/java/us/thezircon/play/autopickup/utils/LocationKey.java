@@ -1,5 +1,6 @@
 package us.thezircon.play.autopickup.utils;
 
+import lombok.Setter;
 import org.bukkit.Location;
 
 import java.util.UUID;
@@ -7,25 +8,25 @@ import java.util.UUID;
 public class LocationKey {
     private final long most;
     private final long least;
-    private final int x;
-    private final short y;
-    private final int z;
+    @Setter
+    private int x;
+    @Setter
+    private int y;
+    @Setter
+    private int z;
 
     public LocationKey(Location location) {
         UUID uuid = location.getWorld().getUID();
         this.most = uuid.getMostSignificantBits();
         this.least = uuid.getLeastSignificantBits();
         this.x = location.getBlockX();
-        this.y = (short) location.getBlockY();
+        this.y = location.getBlockY();
         this.z = location.getBlockZ();
     }
 
-    public LocationKey(UUID world, int x, int y, int z) {
-        this.most = world.getMostSignificantBits();
-        this.least = world.getLeastSignificantBits();
-        this.x = x;
-        this.y = (short) y;
-        this.z = z;
+    public LocationKey(UUID worldUUID) {
+        this.most = worldUUID.getMostSignificantBits();
+        this.least = worldUUID.getLeastSignificantBits();
     }
 
     @Override

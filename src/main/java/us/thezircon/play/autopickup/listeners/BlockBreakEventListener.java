@@ -66,21 +66,17 @@ public class BlockBreakEventListener implements Listener {
         }
     }
 
+    // TODO: BIG_DRIPLEAF break both ways
     private void handleVerticalCropHarvest(Block block, Player player) {
         Material type = block.getType();
 
-        if (EnumVerticalItem.isMultiBlock(type)) {
-            harvestConnectedVertical(player, block.getLocation(), type);
-        }
-    }
-
-    // TODO: BIG_DRIPLEAF break both ways
-    private void harvestConnectedVertical(Player player, Location base, Material type) {
         int direction = EnumVerticalItem.getGrowthDirection(type);
 
-        Location loc = base.clone();
+        if (direction == 0) return;
+
+        Location loc = block.getLocation().clone();
         while (loc.getBlock().getType() == type) {
-                AutoAPI.tagCustomDropLocation(player, loc);
+            AutoAPI.tagCustomDropLocation(player, loc);
             loc.add(0, direction, 0);
         }
     }

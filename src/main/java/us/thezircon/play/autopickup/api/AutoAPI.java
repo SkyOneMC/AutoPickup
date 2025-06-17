@@ -7,6 +7,7 @@ import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.utils.LocationKey;
 import us.thezircon.play.autopickup.utils.PickupObjective;
 
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -40,52 +41,15 @@ public class AutoAPI {
     }
 
     /**
-     * Checks if a specific location in the given world is tagged as a custom drop location.
+     * Retrieves the player associated with a specific location key,
+     * if the location has been tagged for custom drops.
      *
-     * @param uuid The UUID of the world where the location resides.
-     * @param x The x-coordinate of the location to check.
-     * @param y The y-coordinate of the location to check.
-     * @param z The z-coordinate of the location to check.
-     * @return True if the location is tagged as a custom drop location, false otherwise.
+     * @param key The LocationKey representing the specific location to retrieve the associated player.
+     * @return The Player associated with the given location, or null if none is associated.
      */
-    public static boolean isCustomDropLocationTagged(UUID uuid, int x, int y, int z) {
-        LocationKey key = new LocationKey(uuid, x, y, z);
-        return AutoPickup.customItemPatch.containsKey(key);
-    }
-
-    /**
-     * Checks if a specific location has been tagged as a custom drop location.
-     *
-     * @param location The location to check for a custom drop tag.
-     * @return True if the location is tagged as a custom drop location, false otherwise.
-     */
-    public static boolean isCustomDropLocationTagged(Location location) {
-        return AutoPickup.customItemPatch.containsKey(new LocationKey(location));
-    }
-
-    /**
-     * Retrieves the player associated with a specific location in the given world.
-     *
-     * @param uuid The UUID of the world where the location resides.
-     * @param x The x-coordinate of the location.
-     * @param y The y-coordinate of the location.
-     * @param z The z-coordinate of the location.
-     * @return The player associated with the given location, or null if no player is associated.
-     */
-    public static Player getAssociatedPlayer(UUID uuid, int x, int y, int z) {
-        PickupObjective objective = AutoPickup.customItemPatch.get(new LocationKey(uuid, x, y, z));
-
-        return objective.getPlayer();
-    }
-
-    /**
-     * Retrieves the player associated with a specific location, if any.
-     *
-     * @param location The location to check for an associated player.
-     * @return The player associated with the given location, or null if no player is associated.
-     */
-    public static Player getAssociatedPlayer(Location location) {
-        PickupObjective objective = AutoPickup.customItemPatch.get(new LocationKey(location));
+    public static @Nullable Player getAssociatedPlayer(LocationKey key) {
+        PickupObjective objective = AutoPickup.customItemPatch.get(key);
+        if (objective == null) return null;
 
         return objective.getPlayer();
     }

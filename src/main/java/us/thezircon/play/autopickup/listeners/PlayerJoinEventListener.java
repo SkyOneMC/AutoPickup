@@ -42,7 +42,7 @@ public class PlayerJoinEventListener implements Listener {
         for (String change : VersionChk.changelog) {
             if (!change.isEmpty()) {
                 Component updateLine = Component.text("  - " + change, NamedTextColor.YELLOW);
-                PLUGIN.getMsg().send(player, updateLine); // false = don't double-prefix
+                PLUGIN.getMsg().send(player, updateLine);
             }
         }
     }

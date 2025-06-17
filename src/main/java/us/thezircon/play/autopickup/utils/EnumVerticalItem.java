@@ -38,10 +38,6 @@ public enum EnumVerticalItem {
         this.growthDirection = growthDirection;
     }
 
-    public static boolean isMultiBlock(Material material) {
-        return MATERIAL_TO_ENUM.containsKey(material);
-    }
-
     public static int getGrowthDirection(Material material) {
         return MATERIAL_TO_ENUM.get(material);
     }

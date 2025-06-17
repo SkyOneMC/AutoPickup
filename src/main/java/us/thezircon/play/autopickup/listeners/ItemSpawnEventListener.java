@@ -4,6 +4,7 @@ import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import com.bgsoftware.wildstacker.api.objects.StackedItem;
 import org.bukkit.Location;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
 import us.thezircon.play.autopickup.api.AutoAPI;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
+import us.thezircon.play.autopickup.utils.LocationKey;
 
 import java.util.*;
 
@@ -52,17 +54,17 @@ public class ItemSpawnEventListener implements Listener {
         if (isIgnoredDrop(itemEntity)) return;
         if (isBlacklistedItem(stackedItem.getItemStack())) return;
 
-        UUID worldId = location.getWorld().getUID();
         int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
+        LocationKey key = new LocationKey(location.getWorld().getUID());
 
         for (int[] offset : offsets) {
-            int ox = x + offset[0];
-            int oy = y + offset[1];
-            int oz = z + offset[2];
+            key.setX(x + offset[0]);
+            key.setY(y + offset[1]);
+            key.setZ(z + offset[2]);
 
-            if (AutoAPI.isCustomDropLocationTagged(worldId, ox, oy, oz)) {
-                stackedItem.giveItemStack(AutoAPI.getAssociatedPlayer(worldId, ox, oy, oz).getInventory());
-                return;
+            Player player = AutoAPI.getAssociatedPlayer(key);
+            if (player != null) {
+                stackedItem.giveItemStack(player.getInventory());
             }
         }
     }
@@ -75,13 +77,16 @@ public class ItemSpawnEventListener implements Listener {
         if (isBlacklistedItem(itemStack)) return;
 
         int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
+        LocationKey key = new LocationKey(location.getWorld().getUID());
 
         for (int[] offset : offsets) {
-            Location key = new Location(location.getWorld(), x + offset[0], y + offset[1], z + offset[2]);
+            key.setX(x + offset[0]);
+            key.setY(y + offset[1]);
+            key.setZ(z + offset[2]);
 
-            if (AutoAPI.isCustomDropLocationTagged(key)) {
-                InventoryUtils.handleDropGive(AutoAPI.getAssociatedPlayer(key), location, itemStack, false);
-                return;
+            Player player = AutoAPI.getAssociatedPlayer(key);
+            if (player != null) {
+                InventoryUtils.handleDropGive(player, location, itemStack, false);
             }
         }
     }
