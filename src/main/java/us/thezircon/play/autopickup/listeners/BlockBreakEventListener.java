@@ -43,10 +43,14 @@ public class BlockBreakEventListener implements Listener {
 
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
             if (!PLUGIN.getConfigManager().isRequirePermsAUTO()) return;
-            if (!player.hasPermission("autopickup.pickup.mined.autoenabled")) {
+
+            boolean hasPermission = player.hasPermission("autopickup.pickup.mined");
+
+            if (!hasPermission && !player.hasPermission("autopickup.pickup.mined.autoenabled")) {
                 PLUGIN.autopickup_list.remove(player);
             }
-            if (!player.hasPermission("autopickup.pickup.mined.autosmelt.autoenabled")) {
+
+            if (!hasPermission && !player.hasPermission("autopickup.pickup.mined.autosmelt.autoenabled")) {
                 PLUGIN.auto_smelt_blocks.remove(player);
             }
         });
