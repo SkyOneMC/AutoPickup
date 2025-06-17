@@ -1,7 +1,10 @@
 package us.thezircon.play.autopickup.listeners;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,12 +24,8 @@ public class BlockDropItemEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDrop(BlockDropItemEvent event) {
-        if (event.isCancelled()) {
-                return;
-        }
         Player player = event.getPlayer();
         if (!PLUGIN.autopickup_list.contains(player)) return;
-
 
         Block block = event.getBlock();
         Location location = block.getLocation();
@@ -35,8 +34,10 @@ public class BlockDropItemEventListener implements Listener {
         List<ItemStack> drops = event.getItems().stream()
                 .map(Item::getItemStack)
                 .collect(Collectors.toList());
+
         event.getItems().clear();
 
-        InventoryUtils.handleDropsGive(player, location, drops, true);
+        boolean isSmelt = !(event.getBlockState() instanceof Container); // Shouldn't smelt items inside of containers
+        InventoryUtils.handleDropsGive(player, location, drops, isSmelt);
     }
 }
