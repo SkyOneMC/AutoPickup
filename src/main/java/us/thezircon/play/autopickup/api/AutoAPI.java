@@ -40,15 +40,42 @@ public class AutoAPI {
     }
 
     /**
+     * Checks if a specific location in the given world is tagged as a custom drop location.
+     *
+     * @param uuid The UUID of the world where the location resides.
+     * @param x The x-coordinate of the location to check.
+     * @param y The y-coordinate of the location to check.
+     * @param z The z-coordinate of the location to check.
+     * @return True if the location is tagged as a custom drop location, false otherwise.
+     */
+    public static boolean isCustomDropLocationTagged(UUID uuid, int x, int y, int z) {
+        LocationKey key = new LocationKey(uuid, x, y, z);
+        return AutoPickup.customItemPatch.containsKey(key);
+    }
+
+    /**
      * Checks if a specific location has been tagged as a custom drop location.
      *
      * @param location The location to check for a custom drop tag.
      * @return True if the location is tagged as a custom drop location, false otherwise.
      */
     public static boolean isCustomDropLocationTagged(Location location) {
-        PickupObjective objective = AutoPickup.customItemPatch.get(new LocationKey(location));
+        return AutoPickup.customItemPatch.containsKey(new LocationKey(location));
+    }
 
-        return objective != null;
+    /**
+     * Retrieves the player associated with a specific location in the given world.
+     *
+     * @param uuid The UUID of the world where the location resides.
+     * @param x The x-coordinate of the location.
+     * @param y The y-coordinate of the location.
+     * @param z The z-coordinate of the location.
+     * @return The player associated with the given location, or null if no player is associated.
+     */
+    public static Player getAssociatedPlayer(UUID uuid, int x, int y, int z) {
+        PickupObjective objective = AutoPickup.customItemPatch.get(new LocationKey(uuid, x, y, z));
+
+        return objective.getPlayer();
     }
 
     /**

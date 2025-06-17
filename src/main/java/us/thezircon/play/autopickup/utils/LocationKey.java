@@ -20,6 +20,14 @@ public class LocationKey {
         this.z = location.getBlockZ();
     }
 
+    public LocationKey(UUID world, int x, int y, int z) {
+        this.most = world.getMostSignificantBits();
+        this.least = world.getLeastSignificantBits();
+        this.x = x;
+        this.y = (short) y;
+        this.z = z;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof LocationKey other)) return false;

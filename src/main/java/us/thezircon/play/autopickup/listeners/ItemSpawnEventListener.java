@@ -52,13 +52,16 @@ public class ItemSpawnEventListener implements Listener {
         if (isIgnoredDrop(itemEntity)) return;
         if (isBlacklistedItem(stackedItem.getItemStack())) return;
 
+        UUID worldId = location.getWorld().getUID();
         int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
 
         for (int[] offset : offsets) {
-            Location key = new Location(location.getWorld(), x + offset[0], y + offset[1], z + offset[2]);
+            int ox = x + offset[0];
+            int oy = y + offset[1];
+            int oz = z + offset[2];
 
-            if (AutoAPI.isCustomDropLocationTagged(key)) {
-                stackedItem.giveItemStack(AutoAPI.getAssociatedPlayer(key).getInventory());
+            if (AutoAPI.isCustomDropLocationTagged(worldId, ox, oy, oz)) {
+                stackedItem.giveItemStack(AutoAPI.getAssociatedPlayer(worldId, ox, oy, oz).getInventory());
                 return;
             }
         }
