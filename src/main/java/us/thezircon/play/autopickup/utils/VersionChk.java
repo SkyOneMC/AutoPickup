@@ -43,9 +43,8 @@ public class VersionChk {
                 String pluginVersion = Bukkit.getServer().getPluginManager().getPlugin(pluginName).getDescription().getVersion();
 
                 Bukkit.getScheduler().runTask(PLUGIN, () -> {
-                    if (spigotVersion.equals(pluginVersion)) {
-                        PLUGIN.getMsg().sendToConsole(UP_TO_DATE_MSG
-                        );
+                    if (isUpToDate(spigotVersion, pluginVersion)) {
+                        PLUGIN.getMsg().sendToConsole(UP_TO_DATE_MSG);
                     } else {
                         PLUGIN.getMsg().sendToConsole(UPDATE_FOUND_MSG
                                         .append(Component.space())
@@ -93,6 +92,39 @@ public class VersionChk {
             }
             return content.toString();
         }
+    }
+
+    public static boolean isUpToDate(String spigotVersion, String pluginVersion) {
+        return compare(spigotVersion, pluginVersion) < 0;
+    }
+
+    public static int compare(String spigotVersion, String pluginVersion) {
+        String[] parts1 = spigotVersion.split("-");
+        String[] parts2 = pluginVersion.split("-");
+
+        int result = compareVersionNumbers(parts1[0], parts2[0]);
+        if (result != 0) return result;
+
+        // Handle DEVBUILD
+        if (parts1.length == 1 && parts2.length == 1) return 0; // both stable
+        if (parts1.length == 1) return 1; // spigotVersion is stable, pluginVersion is DEVBUILD
+        if (parts2.length == 1) return -1; // pluginVersion is stable, spigotVersion is DEVBUILD
+
+        return parts1[1].compareTo(parts2[1]); // Alpha, Beta, etc..
+    }
+
+    private static int compareVersionNumbers(String spigotVersion, String pluginVersion) {
+        String[] nums1 = spigotVersion.split("\\.");
+        String[] nums2 = pluginVersion.split("\\.");
+        int n1, n2;
+
+        int length = Math.max(nums1.length, nums2.length);
+        for (int i = 0; i < length; i++) {
+            n1 = i < nums1.length ? Integer.parseInt(nums1[i]) : 0;
+            n2 = i < nums2.length ? Integer.parseInt(nums2[i]) : 0;
+            if (n1 != n2) return Integer.compare(n1, n2);
+        }
+        return 0;
     }
 
     public static void noConnection() {

@@ -39,6 +39,6 @@ public enum EnumVerticalItem {
     }
 
     public static int getGrowthDirection(Material material) {
-        return MATERIAL_TO_ENUM.get(material);
+        return MATERIAL_TO_ENUM.getOrDefault(material, 0);
     }
 }
