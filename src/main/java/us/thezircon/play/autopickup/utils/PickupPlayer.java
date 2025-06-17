@@ -12,7 +12,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 
-// TODO: Convertire a DB
+// TODO: Convert to DB
 public class PickupPlayer {
 
     private static final AutoPickup plugin = AutoPickup.getPlugin(AutoPickup.class);
@@ -37,7 +37,7 @@ public class PickupPlayer {
            } catch (IOException err) {
                log.warning("[AutoPickup] Unable to create playdata file for "+uuid);
                // Dev Build
-               log.severe("[AutoPickup] Cuase: "+err.getCause());
+               log.severe("[AutoPickup] Cause: "+err.getCause());
                System.out.println("");
                err.printStackTrace();
                ////////////

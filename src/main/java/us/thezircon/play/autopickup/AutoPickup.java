@@ -125,7 +125,7 @@ public final class AutoPickup extends JavaPlugin {
             @Override
             public void run() {
                 customItemPatch.keySet().removeIf(key ->
-                        Duration.between(Instant.now(), customItemPatch.get(key).getCreatedAt()).getSeconds() < -5);
+                        Duration.between(Instant.now(), customItemPatch.get(key).createdAt()).getSeconds() < -5);
             }
         }.runTaskTimerAsynchronously(this, 10L, 10L);
 

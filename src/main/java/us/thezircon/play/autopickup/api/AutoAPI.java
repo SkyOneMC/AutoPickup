@@ -51,7 +51,7 @@ public class AutoAPI {
         PickupObjective objective = AutoPickup.customItemPatch.get(key);
         if (objective == null) return null;
 
-        return objective.getPlayer();
+        return objective.player();
     }
 
 }
