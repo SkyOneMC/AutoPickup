@@ -22,14 +22,11 @@ public class BlockDropItemEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDrop(BlockDropItemEvent event) {
         if (event.isCancelled()) {
-            PLUGIN.debugMsg("BlockDropItemEvent - Cancelled");
-            return;
+                return;
         }
         Player player = event.getPlayer();
-        PLUGIN.debugMsg("BlockDropItemEvent 1");
         if (!PLUGIN.autopickup_list.contains(player)) return;
 
-        PLUGIN.debugMsg("BlockDropItemEvent 2");
 
         Block block = event.getBlock();
         Location location = block.getLocation();

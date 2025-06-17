@@ -14,14 +14,8 @@ public class BlockBreakEventListener implements Listener {
 
     private static final AutoPickup PLUGIN = AutoPickup.getPlugin(AutoPickup.class);
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
-
-        if (e.isCancelled()) {
-            PLUGIN.debugMsg("BlockBreakEvent cancelled");
-            return;
-        }
-        PLUGIN.debugMsg("BlockBreakEvent");
         Player player = e.getPlayer();
         Block block = e.getBlock();
         Location loc = block.getLocation();
@@ -30,19 +24,14 @@ public class BlockBreakEventListener implements Listener {
                 || PLUGIN.getConfigManager().isWorldBlacklisted(loc) || isBlacklistedBlock(block)) {
             return;
         }
-        PLUGIN.debugMsg("BlockBreakEvent 1");
 
         handlePermissionsAsync(player);
-        PLUGIN.debugMsg("BlockBreakEvent 3");
 
         handleXpAndMending(e, player, block);
-        PLUGIN.debugMsg("BlockBreakEvent 4: " + e.getBlock().getType());
 
         handleVerticalCropHarvest(block, player);
-        PLUGIN.debugMsg("BlockBreakEvent 9");
 
         AutoAPI.tagCustomDropLocation(player, loc);
-        PLUGIN.debugMsg("BlockBreakEvent 10");
     }
 
     private boolean isBlacklistedBlock(Block block) {
@@ -51,7 +40,6 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handlePermissionsAsync(Player player) {
-        PLUGIN.debugMsg("BlockBreakEvent Async 2");
 
         Bukkit.getScheduler().runTaskAsynchronously(PLUGIN, () -> {
             if (!PLUGIN.getConfigManager().isRequirePermsAUTO()) return;
@@ -65,14 +53,12 @@ public class BlockBreakEventListener implements Listener {
     }
 
     private void handleXpAndMending(BlockBreakEvent e, Player player, Block block) {
-        PLUGIN.debugMsg("XP 1");
         if (!PLUGIN.getConfigManager().isUsingSilkSpawner() || block.getType() != Material.SPAWNER) {
             int xp = e.getExpToDrop();
             if (xp <= 0) return;
 
             InventoryUtils.applyMending(player, xp);
-            PLUGIN.debugMsg("XP 2: " + xp);
-            e.setExpToDrop(0);
+                e.setExpToDrop(0);
         }
     }
 
@@ -90,8 +76,7 @@ public class BlockBreakEventListener implements Listener {
 
         Location loc = base.clone();
         while (loc.getBlock().getType() == type) {
-            PLUGIN.debugMsg(loc.getBlock().getType().toString());
-            AutoAPI.tagCustomDropLocation(player, loc);
+                AutoAPI.tagCustomDropLocation(player, loc);
             loc.add(0, direction, 0);
         }
     }

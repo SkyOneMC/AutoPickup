@@ -39,7 +39,7 @@ public final class AutoPickup extends JavaPlugin {
     private PluginHooks pluginHooks;
 
     // Custom Items Patch
-    public static Map<String, PickupObjective> customItemPatch = new ConcurrentHashMap<>();
+    public static Map<LocationKey, PickupObjective> customItemPatch = new ConcurrentHashMap<>();
     public static Set<UUID> droppedItems = new HashSet<>();
 
     // Cache smelting recipe list

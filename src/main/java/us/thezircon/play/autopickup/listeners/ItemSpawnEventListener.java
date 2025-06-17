@@ -4,15 +4,14 @@ import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import com.bgsoftware.wildstacker.api.objects.StackedItem;
 import org.bukkit.Location;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.api.AutoAPI;
 import us.thezircon.play.autopickup.utils.InventoryUtils;
-import us.thezircon.play.autopickup.utils.PickupObjective;
 
 import java.util.*;
 
@@ -49,23 +48,17 @@ public class ItemSpawnEventListener implements Listener {
     private void handleStackedSpawn(Item itemEntity, Location location) {
         StackedItem stackedItem = WildStackerAPI.getStackedItem(itemEntity);
 
-        PLUGIN.debugMsg("Item x" + stackedItem.getStackAmount() + " " + stackedItem.getItemStack().getType() + " spawned at " +
-                "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
-
         if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
         if (isIgnoredDrop(itemEntity)) return;
         if (isBlacklistedItem(stackedItem.getItemStack())) return;
 
-        String key;
-        String world = location.getWorld().toString();
         int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
 
         for (int[] offset : offsets) {
-            key = (x + offset[0]) + ";" + (y + offset[1]) + ";" + (z + offset[2]) + ";" + world;
+            Location key = new Location(location.getWorld(), x + offset[0], y + offset[1], z + offset[2]);
 
-            if (AutoPickup.customItemPatch.containsKey(key)) {
-                PLUGIN.debugMsg("ItemSpawnEvent: Found match at " + key);
-                stackedItem.giveItemStack(getAssociatedPlayer(key).getInventory());
+            if (AutoAPI.isCustomDropLocationTagged(key)) {
+                stackedItem.giveItemStack(AutoAPI.getAssociatedPlayer(key).getInventory());
                 return;
             }
         }
@@ -74,23 +67,17 @@ public class ItemSpawnEventListener implements Listener {
     private void handleVanillaSpawn(Item itemEntity, Location location) {
         ItemStack itemStack = itemEntity.getItemStack();
 
-        PLUGIN.debugMsg("Item x" + itemStack.getAmount() + " " + itemStack.getType() + " spawned at " +
-                "block [" + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + "] in world " + location.getWorld().getName());
-
         if (PLUGIN.getConfigManager().isWorldBlacklisted(location)) return;
         if (isIgnoredDrop(itemEntity)) return;
         if (isBlacklistedItem(itemStack)) return;
 
-        String key;
-        String world = location.getWorld().toString();
         int x = location.getBlockX(), y = location.getBlockY(), z = location.getBlockZ();
 
         for (int[] offset : offsets) {
-            key = (x + offset[0]) + ";" + (y + offset[1]) + ";" + (z + offset[2]) + ";" + world;
+            Location key = new Location(location.getWorld(), x + offset[0], y + offset[1], z + offset[2]);
 
-            if (AutoPickup.customItemPatch.containsKey(key)) {
-                PLUGIN.debugMsg("ItemSpawnEvent: Found match at " + key);
-                InventoryUtils.handleDropGive(getAssociatedPlayer(key), location, itemStack, false);
+            if (AutoAPI.isCustomDropLocationTagged(key)) {
+                InventoryUtils.handleDropGive(AutoAPI.getAssociatedPlayer(key), location, itemStack, false);
                 return;
             }
         }
@@ -112,11 +99,5 @@ public class ItemSpawnEventListener implements Listener {
         if (!PLUGIN.getConfigManager().isDoBlacklisted()) return false;
 
         return PLUGIN.getConfigManager().getBlacklistedItems().contains(itemStack.getType().toString());
-    }
-
-    private Player getAssociatedPlayer(String key) {
-        PickupObjective objective = AutoPickup.customItemPatch.get(key);
-
-        return objective.getPlayer();
     }
 }

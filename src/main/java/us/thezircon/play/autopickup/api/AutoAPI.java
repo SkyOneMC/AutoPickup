@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import us.thezircon.play.autopickup.AutoPickup;
+import us.thezircon.play.autopickup.utils.LocationKey;
 import us.thezircon.play.autopickup.utils.PickupObjective;
 
 import java.time.Instant;
@@ -35,8 +36,31 @@ public class AutoAPI {
      * Blocks broken by players are already tagged for custom drops; this should be used for adjacent blocks that should be watched for additional custom drops.
      */
     public static void tagCustomDropLocation(Player player, Location location) {
-        String key = location.getBlockX()+";"+location.getBlockY()+";"+location.getBlockZ()+";"+location.getWorld();
-        AutoPickup.customItemPatch.put(key, new PickupObjective(location, player, Instant.now()));
+        AutoPickup.customItemPatch.put(new LocationKey(location), new PickupObjective(location, player, Instant.now()));
+    }
+
+    /**
+     * Checks if a specific location has been tagged as a custom drop location.
+     *
+     * @param location The location to check for a custom drop tag.
+     * @return True if the location is tagged as a custom drop location, false otherwise.
+     */
+    public static boolean isCustomDropLocationTagged(Location location) {
+        PickupObjective objective = AutoPickup.customItemPatch.get(new LocationKey(location));
+
+        return objective != null;
+    }
+
+    /**
+     * Retrieves the player associated with a specific location, if any.
+     *
+     * @param location The location to check for an associated player.
+     * @return The player associated with the given location, or null if no player is associated.
+     */
+    public static Player getAssociatedPlayer(Location location) {
+        PickupObjective objective = AutoPickup.customItemPatch.get(new LocationKey(location));
+
+        return objective.getPlayer();
     }
 
 }
