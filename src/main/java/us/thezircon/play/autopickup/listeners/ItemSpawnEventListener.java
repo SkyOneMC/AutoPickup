@@ -35,7 +35,7 @@ public class ItemSpawnEventListener implements Listener {
         offsets.sort(Comparator.comparingInt(o -> Math.abs(o[0]) + Math.abs(o[1]) + Math.abs(o[2])));
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onSpawn(ItemSpawnEvent event) {
         Item itemEntity = event.getEntity();
         Location location = event.getLocation();
@@ -64,6 +64,7 @@ public class ItemSpawnEventListener implements Listener {
 
             Player player = AutoAPI.getAssociatedPlayer(key);
             if (player != null) {
+                itemEntity.remove();
                 stackedItem.giveItemStack(player.getInventory());
             }
         }
@@ -86,6 +87,7 @@ public class ItemSpawnEventListener implements Listener {
 
             Player player = AutoAPI.getAssociatedPlayer(key);
             if (player != null) {
+                itemEntity.remove();
                 InventoryUtils.handleDropGive(player, location, itemStack, false);
             }
         }
