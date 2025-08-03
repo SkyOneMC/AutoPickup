@@ -64,7 +64,6 @@ public class ItemSpawnEventListener implements Listener {
 
             Player player = AutoAPI.getAssociatedPlayer(key);
             if (player != null) {
-                itemEntity.remove();
                 stackedItem.giveItemStack(player.getInventory());
             }
         }
@@ -87,7 +86,6 @@ public class ItemSpawnEventListener implements Listener {
 
             Player player = AutoAPI.getAssociatedPlayer(key);
             if (player != null) {
-                itemEntity.remove();
                 InventoryUtils.handleDropGive(player, location, itemStack, false);
             }
         }
